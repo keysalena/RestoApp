@@ -57,10 +57,8 @@ public class KategoriPanel extends JPanel implements DashboardFrame.Refreshable 
             }
         };
 
-        // Styling tabel
         HomePanel.styleTable(table, cols);
         
-        // PERBAIKAN: Hanya mengatur kolom 0 dan 1. Kolom 2 dihapus agar tidak error.
         table.getColumnModel().getColumn(0).setPreferredWidth(80);
         table.getColumnModel().getColumn(1).setPreferredWidth(450);
         
@@ -93,24 +91,20 @@ public class KategoriPanel extends JPanel implements DashboardFrame.Refreshable 
 
         JSeparator sep2 = Theme.separator(); sep2.setBounds(fx, fy+10, fw, 1); p.add(sep2); fy += 24;
 
-        // Menggunakan UNICODE Escape agar lebih aman dari error encoding
         Theme.StyledButton save = new Theme.StyledButton("\uD83D\uDCBE  Simpan", Theme.ACCENT_GREEN, Color.WHITE);
         save.setBounds(fx, fy, 98, 38); 
-        // SET FONT KE SEGOE UI SYMBOL
         save.setFont(new Font("Segoe UI Symbol", Font.BOLD, 12)); 
         save.addActionListener(e -> save()); 
         p.add(save);
 
         Theme.StyledButton del = new Theme.StyledButton("\uD83D\uDDD1  Hapus", Theme.ACCENT_RED, Color.WHITE);
         del.setBounds(fx+104, fy, 98, 38); 
-        // SET FONT KE SEGOE UI SYMBOL
         del.setFont(new Font("Segoe UI Symbol", Font.BOLD, 12));
         del.addActionListener(e -> delete()); 
         p.add(del);
 
         Theme.StyledButton clr = new Theme.StyledButton("\u2716  Batal", new Color(70,90,130), Color.WHITE);
         clr.setBounds(fx+208, fy, 100, 38); 
-        // SET FONT KE SEGOE UI SYMBOL
         clr.setFont(new Font("Segoe UI Symbol", Font.BOLD, 12));
         clr.addActionListener(e -> clearForm()); 
         p.add(clr);

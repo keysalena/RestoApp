@@ -163,7 +163,7 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
 
         // Kategori
         p.add(Theme.label("Kategori *", Theme.FONT_LABEL, Theme.ACCENT_ORANGE)).setBounds(fx, fy, fw, 16);
-        kategoriCombo = new Theme.StyledComboBox(DataStore.getKategoriNames());
+        kategoriCombo = new Theme.StyledComboBox(new String[]{}); 
         kategoriCombo.setBounds(fx, fy+18, fw, 36); p.add(kategoriCombo); fy += 68;
 
         // Harga

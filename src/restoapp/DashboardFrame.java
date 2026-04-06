@@ -12,8 +12,10 @@ public class DashboardFrame extends JFrame {
     private JLabel clockLabel;
     private JButton[] navButtons;
     private String[] navKeys = {"HOME", "MASAKAN", "KATEGORI", "ROLE", "USER"};
+    private final String loggedInName;
 
-    public DashboardFrame() {
+    public DashboardFrame(String namaUser) {
+        this.loggedInName = namaUser;
         setTitle("RestoApp - Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1250, 750);
@@ -59,9 +61,7 @@ public class DashboardFrame extends JFrame {
         t.start();
     }
 
-    // ────────────────────────────────────────────────────────────────
     //  Sidebar
-    // ────────────────────────────────────────────────────────────────
     private JPanel buildSidebar() {
         JPanel sb = new JPanel(null) {
             @Override protected void paintComponent(Graphics g) {
@@ -196,9 +196,7 @@ public class DashboardFrame extends JFrame {
         return b;
     }
 
-    // ────────────────────────────────────────────────────────────────
     //  Top Bar
-    // ────────────────────────────────────────────────────────────────
     private JPanel buildTopBar() {
         JPanel tb = new JPanel(null) {
             @Override protected void paintComponent(Graphics g) {
@@ -221,8 +219,7 @@ public class DashboardFrame extends JFrame {
         tb.add(clockLabel);
 
         // Admin badge
-        JLabel adminBadge = new JLabel("  " + DataStore.loggedUser + "  ", SwingConstants.CENTER) {
-            @Override protected void paintComponent(Graphics g) {
+                JLabel adminBadge = new JLabel("  " + loggedInName + "  ", SwingConstants.CENTER) {            @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setPaint(new GradientPaint(0,0,Theme.ACCENT_ORANGE,getWidth(),getHeight(),new Color(190,75,15)));
@@ -274,9 +271,7 @@ public class DashboardFrame extends JFrame {
         return b;
     }
 
-    // ────────────────────────────────────────────────────────────────
     //  Navigation
-    // ────────────────────────────────────────────────────────────────
     public void showPanel(String key) {
         cardLayout.show(contentArea, key);
         for (int i = 0; i < navKeys.length; i++) {
@@ -286,7 +281,7 @@ public class DashboardFrame extends JFrame {
             navButtons[i].setFont(new Font("Segoe UI Symbol", sel ? Font.BOLD : Font.PLAIN, 14));
             navButtons[i].repaint();
         }
-        // Refresh panel if it supports it
+
         Component comp = contentArea.getComponent(java.util.Arrays.asList(navKeys).indexOf(key));
         if (comp instanceof Refreshable) ((Refreshable)comp).refresh();
     }

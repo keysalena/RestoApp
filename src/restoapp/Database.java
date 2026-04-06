@@ -5,12 +5,11 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class Database {
-    // === KONFIGURASI DATABASE — sesuaikan dengan environment Anda ===
     private static final String HOST     = "localhost";
     private static final String PORT     = "3306";
     private static final String DB_NAME  = "db_restoran";
     private static final String USER     = "root";
-    private static final String PASSWORD = ""; // ganti jika ada password
+    private static final String PASSWORD = ""; 
 
     private static final String URL =
         "jdbc:mysql://" + HOST + ":" + PORT + "/" + DB_NAME
@@ -45,7 +44,6 @@ public class Database {
         }
     }
 
-    /** Test koneksi, tampilkan dialog jika gagal */
     public static boolean testConnection() {
         try {
             Connection c = getConnection();

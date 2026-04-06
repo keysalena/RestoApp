@@ -1,4 +1,5 @@
 package restoapp;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
@@ -6,6 +7,9 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public class LoginFrame extends JFrame {
 
@@ -26,12 +30,10 @@ public class LoginFrame extends JFrame {
         
         lp.setPreferredSize(new Dimension(920, 580));
 
-        // Background
         BackgroundPanel bg = new BackgroundPanel();
         bg.setBounds(0, 0, 920, 580);
         lp.add(bg, JLayeredPane.DEFAULT_LAYER);
 
-        // Left brand
         BrandPanel brand = new BrandPanel();
         brand.setBounds(0, 0, 430, 580);
         lp.add(brand, JLayeredPane.PALETTE_LAYER);
@@ -183,7 +185,7 @@ public class LoginFrame extends JFrame {
         int px = 52, fw = 490 - px*2;
 
         // Header
-        JLabel h1 = Theme.label("Selamat Datang \uD83D\uDC4B", new Font("Segoe UI Emoji", Font.BOLD, 24), Theme.TEXT_WHITE); // 👋
+        JLabel h1 = Theme.label("Selamat Datang \uD83D\uDC4B", new Font("Segoe UI Emoji", Font.BOLD, 24), Theme.TEXT_WHITE); 
         h1.setBounds(px, 75, fw, 34);
         p.add(h1);
 
@@ -241,8 +243,8 @@ public class LoginFrame extends JFrame {
         resetBtn.addActionListener(e -> resetForm());
         p.add(resetBtn);
 
-        // Hint
-        JLabel hint = Theme.label("Demo: admin / admin123  atau  kasir1 / kasir123", Theme.FONT_SMALL, Theme.TEXT_DIM);
+        // Hint (Bisa Anda hapus jika database sudah jalan)
+        JLabel hint = Theme.label("Pastikan username dan password benar sesuai database.", Theme.FONT_SMALL, Theme.TEXT_DIM);
         hint.setBounds(px, 455, fw, 16);
         hint.setHorizontalAlignment(SwingConstants.CENTER);
         p.add(hint);
@@ -257,7 +259,7 @@ public class LoginFrame extends JFrame {
     }
 
     // ────────────────────────────────────────────────────────────────
-    //  Logic
+    //  Logic (DIPERBARUI UNTUK DATABASE)
     // ────────────────────────────────────────────────────────────────
     private void doLogin() {
         String user = userField.getRealText().trim();
@@ -268,18 +270,46 @@ public class LoginFrame extends JFrame {
             msgLabel.setText("Username dan password wajib diisi!");
             return;
         }
-        if (DataStore.validateLogin(user, pass)) {
-            msgLabel.setForeground(Theme.ACCENT_GREEN);
-            msgLabel.setText("Login berhasil! Membuka dashboard...");
-            Timer t = new Timer(600, e -> {
-                dispose();
-                new DashboardFrame().setVisible(true);
-            });
-            t.setRepeats(false); t.start();
-        } else {
+
+        try {
+            Connection conn = Database.getConnection();
+            
+            // Query ke tabel 'users'. Sesuaikan nama kolom jika berbeda di database Anda
+            String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setString(1, user);
+            pst.setString(2, pass);
+            
+            ResultSet rs = pst.executeQuery();
+
+            if (rs.next()) {
+                // Login Berhasil
+                msgLabel.setForeground(Theme.ACCENT_GREEN);
+                msgLabel.setText("Login berhasil! Membuka dashboard...");
+                
+                // Ambil nama dari database untuk ditampilkan di Dashboard (sesuaikan nama kolomnya misal: 'nama_user')
+                // Jika tidak ada kolom nama, Anda bisa pakai: String namaUserDariDB = user;
+                String namaUserDariDB = rs.getString("nama_user"); 
+                
+                Timer t = new Timer(600, e -> {
+                    dispose(); // Tutup LoginFrame
+                    DashboardFrame dashboard = new DashboardFrame(namaUserDariDB);
+                    dashboard.setVisible(true);
+                });
+                t.setRepeats(false); 
+                t.start();
+                
+            } else {
+                // Login Gagal (Data tidak ditemukan)
+                msgLabel.setForeground(Theme.ACCENT_RED);
+                msgLabel.setText("Username atau password salah!");
+                passField.setText("");
+            }
+            
+        } catch (Exception ex) {
             msgLabel.setForeground(Theme.ACCENT_RED);
-            msgLabel.setText("Username atau password salah!");
-            passField.setText("");
+            msgLabel.setText("Terjadi kesalahan sistem!");
+            ex.printStackTrace(); // Tampilkan detail error di console
         }
     }
 

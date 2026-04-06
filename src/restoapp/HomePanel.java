@@ -10,7 +10,7 @@ import java.sql.Statement;
 public class HomePanel extends JPanel implements DashboardFrame.Refreshable {
 
     private JLabel masakanCount, kategoriCount, userCount, tersediaCount;
-    private DefaultTableModel tableModel; // Ditambahkan agar tabel bisa di-refresh
+    private DefaultTableModel tableModel;
 
     public HomePanel() {
         setLayout(null);
@@ -19,7 +19,6 @@ public class HomePanel extends JPanel implements DashboardFrame.Refreshable {
     }
 
     private void buildUI() {
-        // Page title
         JLabel pageTitle = Theme.label("Beranda", new Font("Segoe UI", Font.BOLD, 22), Theme.TEXT_WHITE);
         pageTitle.setBounds(28, 24, 400, 30);
         add(pageTitle);
@@ -27,13 +26,11 @@ public class HomePanel extends JPanel implements DashboardFrame.Refreshable {
         pageSub.setBounds(28, 56, 500, 20);
         add(pageSub);
 
-        // Stat cards (Menggunakan Unicode agar ikon aman dari error)
         masakanCount = addStatCard(28, 94, "Total Masakan", "0", Theme.ACCENT_ORANGE, "\uD83C\uDF74");
         kategoriCount = addStatCard(228, 94, "Total Kategori", "0", Theme.ACCENT_BLUE, "\u2630");
         userCount     = addStatCard(428, 94, "Total User", "0", Theme.ACCENT_GREEN, "\uD83D\uDC64");
         tersediaCount = addStatCard(628, 94, "Menu Tersedia", "0", new Color(150,80,220), "\u2705");
 
-        // Recent masakan table
         JLabel tableTitle = Theme.label("Daftar Masakan Terbaru", Theme.FONT_HEADING, Theme.TEXT_WHITE);
         tableTitle.setBounds(28, 224, 400, 22);
         add(tableTitle);
@@ -42,7 +39,7 @@ public class HomePanel extends JPanel implements DashboardFrame.Refreshable {
         tbl.setBounds(28, 252, 880, 340);
         add(tbl);
 
-        refresh(); // Memuat data dari database saat pertama kali dibuka
+        refresh(); 
     }
 
     private JLabel addStatCard(int x, int y, String title, String value, Color accent, String icon) {
@@ -76,13 +73,12 @@ public class HomePanel extends JPanel implements DashboardFrame.Refreshable {
         card.add(val);
 
         add(card);
-        return val; // Mengembalikan label angka agar bisa diubah text-nya nanti
+        return val;
     }
 
     private JScrollPane buildMiniTable() {
         String[] cols = {"ID", "Nama Masakan", "Kategori", "Harga (Rp)", "Status"};
         
-        // Menggunakan DefaultTableModel kosong terlebih dahulu
         tableModel = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -138,23 +134,18 @@ public class HomePanel extends JPanel implements DashboardFrame.Refreshable {
             Statement st = conn.createStatement();
             ResultSet rs;
 
-            // 1. Hitung Total Masakan
             rs = st.executeQuery("SELECT COUNT(*) FROM menu");
             if (rs.next()) masakanCount.setText(rs.getString(1));
 
-            // 2. Hitung Total Kategori
             rs = st.executeQuery("SELECT COUNT(*) FROM kategori");
             if (rs.next()) kategoriCount.setText(rs.getString(1));
 
-            // 3. Hitung Total User
             rs = st.executeQuery("SELECT COUNT(*) FROM users");
             if (rs.next()) userCount.setText(rs.getString(1));
 
-            // 4. Hitung Menu Tersedia
             rs = st.executeQuery("SELECT COUNT(*) FROM menu WHERE status = 'tersedia'");
             if (rs.next()) tersediaCount.setText(rs.getString(1));
 
-            // 5. Muat Data Tabel (10 Masakan Terbaru)
             tableModel.setRowCount(0); // Bersihkan isi tabel lama
             String sql = "SELECT m.id_menu, m.nama_menu, k.nama_kategori, m.harga, m.status " +
                          "FROM menu m JOIN kategori k ON m.id_kategori = k.id_kategori " +
@@ -163,7 +154,6 @@ public class HomePanel extends JPanel implements DashboardFrame.Refreshable {
             
             while (rs.next()) {
                 String statusStr = rs.getString("status");
-                // Membuat huruf depan status menjadi kapital
                 String capStatus = statusStr.substring(0, 1).toUpperCase() + statusStr.substring(1);
 
                 tableModel.addRow(new Object[]{
