@@ -11,7 +11,7 @@ public class DashboardFrame extends JFrame {
     private CardLayout cardLayout;
     private JLabel clockLabel;
     private JButton[] navButtons;
-    private String[] navKeys = {"HOME", "MASAKAN", "KATEGORI", "ROLE", "USER"};
+    private String[] navKeys = {"HOME", "MASAKAN", "KATEGORI", "USER"};
     private final String loggedInName;
 
     public DashboardFrame(String namaUser) {
@@ -22,7 +22,6 @@ public class DashboardFrame extends JFrame {
         setLocationRelativeTo(null);
         setResizable(true);
 
-        // Root
         JPanel root = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
                 g.setColor(Theme.BG_DARK);
@@ -31,22 +30,18 @@ public class DashboardFrame extends JFrame {
         };
         root.setOpaque(true);
 
-        // Sidebar
         root.add(buildSidebar(), BorderLayout.WEST);
 
-        // Center (topbar + content)
         JPanel center = new JPanel(new BorderLayout());
         center.setOpaque(false);
         center.add(buildTopBar(), BorderLayout.NORTH);
 
-        // Content area with CardLayout
         cardLayout = new CardLayout();
         contentArea = new JPanel(cardLayout);
         contentArea.setOpaque(false);
         contentArea.add(new HomePanel(), "HOME");
         contentArea.add(new MasakanPanel(), "MASAKAN");
         contentArea.add(new KategoriPanel(), "KATEGORI");
-        contentArea.add(new RolePanel(), "ROLE");
         contentArea.add(new UserPanel(), "USER");
 
         center.add(contentArea, BorderLayout.CENTER);
@@ -56,12 +51,10 @@ public class DashboardFrame extends JFrame {
         enableDrag(root);
         showPanel("HOME");
 
-        // Clock timer
         Timer t = new Timer(1000, e -> updateClock());
         t.start();
     }
 
-    //  Sidebar
     private JPanel buildSidebar() {
         JPanel sb = new JPanel(null) {
             @Override protected void paintComponent(Graphics g) {
@@ -80,15 +73,12 @@ public class DashboardFrame extends JFrame {
         };
         sb.setPreferredSize(new Dimension(220, 0));
 
-        // Logo area
         JPanel logo = new JPanel(null) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // circle
                 g2.setPaint(new GradientPaint(20,20,Theme.ACCENT_ORANGE,60,60,new Color(190,75,15)));
                 g2.fillOval(15, 12, 44, 44);
-                // fork icon
                 g2.setColor(Color.WHITE);
                 g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                 g2.drawLine(30, 18, 30, 50); g2.drawLine(26, 18, 26, 28); g2.drawLine(34, 18, 34, 28); g2.drawLine(26, 28, 34, 28);
@@ -110,22 +100,18 @@ public class DashboardFrame extends JFrame {
         logo.add(appSub);
         sb.add(logo);
 
-        // Separator
         JSeparator sep = Theme.separator();
         sep.setBounds(14, 76, 192, 1);
         sb.add(sep);
 
-        // Nav label
         JLabel navLbl = Theme.label("NAVIGASI", new Font("Segoe UI", Font.BOLD, 10), Theme.TEXT_DIM);
         navLbl.setBounds(16, 88, 188, 16);
         sb.add(navLbl);
 
-        // Nav buttons
         String[][] navItems = {
             {"HOME",    "\u229E  Beranda"},   // Ikon ⊞
             {"MASAKAN", "\uD83C\uDF74  Masakan"}, // Ikon 🍽
             {"KATEGORI","\u2630  Kategori"},  // Ikon ☰
-            {"ROLE",    "\uD83D\uDEE1  Role"},    // Ikon 🛡
             {"USER",    "\uD83D\uDC64  User"}     // Ikon 👤
         };
         navButtons = new JButton[navItems.length];
@@ -140,7 +126,6 @@ public class DashboardFrame extends JFrame {
             ny += 48;
         }
 
-        // Bottom: logout
         JPanel bottom = new JPanel(null);
         bottom.setOpaque(false);
         bottom.setBounds(0, 620, 220, 80);
@@ -196,7 +181,6 @@ public class DashboardFrame extends JFrame {
         return b;
     }
 
-    //  Top Bar
     private JPanel buildTopBar() {
         JPanel tb = new JPanel(null) {
             @Override protected void paintComponent(Graphics g) {
@@ -218,7 +202,6 @@ public class DashboardFrame extends JFrame {
         clockLabel.setBounds(300, 18, 280, 18);
         tb.add(clockLabel);
 
-        // Admin badge
         JLabel adminBadge = new JLabel("  " + loggedInName + "  ", SwingConstants.CENTER) {            
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -272,7 +255,6 @@ public class DashboardFrame extends JFrame {
         return b;
     }
 
-    //  Navigation
     public void showPanel(String key) {
         cardLayout.show(contentArea, key);
         for (int i = 0; i < navKeys.length; i++) {

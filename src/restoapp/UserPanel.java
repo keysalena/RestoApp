@@ -34,8 +34,6 @@ public class UserPanel extends JPanel implements DashboardFrame.Refreshable {
         body.add(buildTableSection());
         body.add(buildFormSection());
         add(body, BorderLayout.CENTER);
-        
-        // Data akan dimuat otomatis saat panel dipanggil lewat refresh()
     }
 
     private JPanel buildTableSection() {
@@ -45,7 +43,6 @@ public class UserPanel extends JPanel implements DashboardFrame.Refreshable {
         JLabel t = Theme.label("■  Daftar Pengguna", Theme.FONT_HEADING, Theme.TEXT_WHITE);
         t.setBounds(14, 14, 300, 22); p.add(t);
 
-        // Kolom status dihapus, sisa 4 kolom
         String[] cols = {"ID", "Nama Lengkap", "Username", "Role"};
         tableModel = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -60,7 +57,6 @@ public class UserPanel extends JPanel implements DashboardFrame.Refreshable {
         };
         HomePanel.styleTable(table, cols);
         
-        // Sesuaikan lebar kolom karena status dihapus
         table.getColumnModel().getColumn(0).setPreferredWidth(40);
         table.getColumnModel().getColumn(1).setPreferredWidth(210);
         table.getColumnModel().getColumn(2).setPreferredWidth(140);
@@ -101,9 +97,8 @@ public class UserPanel extends JPanel implements DashboardFrame.Refreshable {
         passField = new Theme.StyledPasswordField();
         passField.setBounds(fx, fy+18, fw, 36); p.add(passField); fy += 68;
 
-        // Role mengambil lebar penuh (fw) karena Status dihapus
         p.add(Theme.label("Role *", Theme.FONT_LABEL, Theme.ACCENT_ORANGE)).setBounds(fx, fy, fw, 16);
-        roleCombo = new Theme.StyledComboBox(new String[]{}); // Diisi dinamis oleh refresh()
+        roleCombo = new Theme.StyledComboBox(new String[]{"Admin", "Kasir"});
         roleCombo.setBounds(fx, fy+18, fw, 36); p.add(roleCombo); fy += 68;
 
         JSeparator sep2 = Theme.separator(); sep2.setBounds(fx, fy+8, fw, 1); p.add(sep2); fy += 22;
@@ -147,8 +142,7 @@ public class UserPanel extends JPanel implements DashboardFrame.Refreshable {
         tableModel.setRowCount(0);
         try {
             java.sql.Connection conn = Database.getConnection();
-            String sql = "SELECT u.id_user, u.nama_user, u.username, r.nama_role " +
-                         "FROM users u JOIN role r ON u.id_role = r.id_role ORDER BY u.id_user DESC";
+            String sql = "SELECT id_user, nama_user, username, role FROM users ORDER BY id_user DESC";
             java.sql.Statement st = conn.createStatement();
             java.sql.ResultSet rs = st.executeQuery(sql);
 
@@ -157,7 +151,7 @@ public class UserPanel extends JPanel implements DashboardFrame.Refreshable {
                     rs.getInt("id_user"), 
                     rs.getString("nama_user"), 
                     rs.getString("username"), 
-                    rs.getString("nama_role")
+                    rs.getString("role")
                 });
             }
         } catch (Exception e) {
@@ -198,15 +192,7 @@ public class UserPanel extends JPanel implements DashboardFrame.Refreshable {
         try {
             java.sql.Connection conn = Database.getConnection();
 
-            // Dapatkan id_role
-            int idRole = -1;
-            java.sql.PreparedStatement pstRole = conn.prepareStatement("SELECT id_role FROM role WHERE nama_role = ?");
-            pstRole.setString(1, roleName);
-            java.sql.ResultSet rsRole = pstRole.executeQuery();
-            if (rsRole.next()) idRole = rsRole.getInt("id_role");
-
             if (selectedId == -1) {
-                // Cek username duplikat
                 java.sql.PreparedStatement checkUser = conn.prepareStatement("SELECT id_user FROM users WHERE username = ?");
                 checkUser.setString(1, uname);
                 if (checkUser.executeQuery().next()) {
@@ -214,32 +200,30 @@ public class UserPanel extends JPanel implements DashboardFrame.Refreshable {
                     return;
                 }
 
-                // INSERT
-                String sql = "INSERT INTO users (nama_user, username, password, id_role) VALUES (?, ?, ?, ?)";
+                String sql = "INSERT INTO users (nama_user, username, password, role) VALUES (?, ?, ?, ?)";
                 java.sql.PreparedStatement pst = conn.prepareStatement(sql);
                 pst.setString(1, nama);
                 pst.setString(2, uname);
                 pst.setString(3, pass); 
-                pst.setInt(4, idRole);
+                pst.setString(4, roleName);
                 pst.executeUpdate();
                 JOptionPane.showMessageDialog(this, "User berhasil ditambahkan!");
             } else {
-                // UPDATE
                 if (pass.isEmpty()) {
-                    String sql = "UPDATE users SET nama_user=?, username=?, id_role=? WHERE id_user=?";
+                    String sql = "UPDATE users SET nama_user=?, username=?, role=? WHERE id_user=?";
                     java.sql.PreparedStatement pst = conn.prepareStatement(sql);
                     pst.setString(1, nama);
                     pst.setString(2, uname);
-                    pst.setInt(3, idRole);
+                    pst.setString(3, roleName);
                     pst.setInt(4, selectedId);
                     pst.executeUpdate();
                 } else {
-                    String sql = "UPDATE users SET nama_user=?, username=?, password=?, id_role=? WHERE id_user=?";
+                    String sql = "UPDATE users SET nama_user=?, username=?, password=?, role=? WHERE id_user=?";
                     java.sql.PreparedStatement pst = conn.prepareStatement(sql);
                     pst.setString(1, nama);
                     pst.setString(2, uname);
                     pst.setString(3, pass);
-                    pst.setInt(4, idRole);
+                    pst.setString(4, roleName);
                     pst.setInt(5, selectedId);
                     pst.executeUpdate();
                 }
@@ -285,16 +269,6 @@ public class UserPanel extends JPanel implements DashboardFrame.Refreshable {
 
     @Override 
     public void refresh() { 
-        roleCombo.removeAllItems();
-        try {
-            java.sql.Connection conn = Database.getConnection();
-            java.sql.ResultSet rs = conn.createStatement().executeQuery("SELECT nama_role FROM role");
-            while (rs.next()) {
-                roleCombo.addItem(rs.getString("nama_role"));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         loadTable(); 
     }
 }

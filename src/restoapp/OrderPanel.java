@@ -8,9 +8,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.CallableStatement;
 
 public class OrderPanel extends JPanel {
-    private KasirDashboardFrame mainFrame; // Referensi ke Frame Utama
+    private KasirDashboardFrame mainFrame; 
     
     private DefaultTableModel cartModel;
     private JTable cartTable;
@@ -136,7 +137,7 @@ public class OrderPanel extends JPanel {
         totalLabel.setBounds(20, 410, 280, 30);
         pnlKanan.add(totalLabel);
 
-        Theme.StyledButton orderBtn = new Theme.StyledButton("\u2714  Proses Order", Theme.ACCENT_BLUE, Color.WHITE);
+        Theme.StyledButton orderBtn = new Theme.StyledButton("Proses Order", Theme.ACCENT_BLUE, Color.WHITE);
         orderBtn.setBounds(20, 450, 280, 45);
         orderBtn.addActionListener(e -> processOrder());
         pnlKanan.add(orderBtn);
@@ -152,7 +153,7 @@ public class OrderPanel extends JPanel {
         });
 
         loadMenu();
-        refreshMejaStatus(); // Panggil pengecekan meja saat pertama kali dibuka
+        refreshMejaStatus(); 
     }
 
     private void updateSelectedMeja(int no) {
@@ -172,9 +173,7 @@ public class OrderPanel extends JPanel {
         }
     }
 
-    // --- FUNGSI: Disable meja yang belum lunas ---
     public void refreshMejaStatus() {
-        // 1. Kembalikan semua tombol meja ke kondisi normal terlebih dahulu
         for (int i = 0; i < 20; i++) {
             btnMejas[i].setEnabled(true);
             btnMejas[i].setBackground(Theme.BG_CARD);
@@ -184,29 +183,26 @@ public class OrderPanel extends JPanel {
 
         try {
             Connection conn = Database.getConnection();
-            // Cari nomor meja dari order hari ini yang status bayarnya bukan 'lunas'
-            String sql = "SELECT DISTINCT o.no_meja FROM orders o " +
-                         "LEFT JOIN transaksi t ON o.id_order = t.id_order " +
-                         "WHERE COALESCE(t.status, 'belum lunas') != 'lunas' AND DATE(o.tanggal) = CURDATE()";
+            String sql = "SELECT DISTINCT no_meja FROM orders " +
+                         "WHERE COALESCE(status_bayar, 'belum lunas') != 'lunas' " +
+                         "AND DATE(tanggal) = CURDATE()";
             ResultSet rs = conn.createStatement().executeQuery(sql);
             
             while (rs.next()) {
                 int noMeja = rs.getInt("no_meja");
                 if (noMeja >= 1 && noMeja <= 20) {
                     int idx = noMeja - 1;
-                    btnMejas[idx].setEnabled(false); // Matikan tombol
-                    btnMejas[idx].setBackground(new Color(40, 45, 55)); // Warna gelap
-                    btnMejas[idx].setForeground(new Color(100, 100, 100)); // Teks pudar
+                    btnMejas[idx].setEnabled(false); 
+                    btnMejas[idx].setBackground(new Color(40, 45, 55)); 
+                    btnMejas[idx].setForeground(new Color(100, 100, 100)); 
                     btnMejas[idx].setToolTipText("Meja sedang digunakan (Belum Lunas)");
                     
-                    // Jika meja yang ter-disable kebetulan sedang dipilih, batalkan pilihannya
                     if (selectedMeja == noMeja) {
                         updateSelectedMeja(-1);
                     }
                 }
             }
             
-            // 2. Jika meja yang dipilih masih valid, warnai oranye. Jika tidak, cari meja kosong terdekat.
             if (selectedMeja != -1 && btnMejas[selectedMeja - 1].isEnabled()) {
                 updateSelectedMeja(selectedMeja);
             } else {
@@ -226,15 +222,13 @@ public class OrderPanel extends JPanel {
         menuGridPanel.removeAll();
         try {
             Connection conn = Database.getConnection();
-            // PERUBAHAN: Menambahkan kolom 'gambar' pada Query SELECT
-            ResultSet rs = conn.createStatement().executeQuery("SELECT id_menu, nama_menu, harga, gambar, status FROM menu WHERE status='tersedia' ORDER BY nama_menu");
+            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM view_menu WHERE status='tersedia'");
             while (rs.next()) {
                 int id = rs.getInt("id_menu");
                 String nama = rs.getString("nama_menu");
                 int harga = rs.getInt("harga");
                 String imgPath = rs.getString("gambar");
                 
-                // PERUBAHAN: Memasukkan imgPath ke dalam parameter createMenuCard
                 menuGridPanel.add(createMenuCard(id, nama, harga, imgPath));
             }
             menuGridPanel.revalidate();
@@ -242,35 +236,38 @@ public class OrderPanel extends JPanel {
         } catch (Exception ex) { ex.printStackTrace(); }
     }
 
-    // PERUBAHAN: Penambahan argumen imgPath dan logika muat gambar
-    private JPanel createMenuCard(int id, String nama, int harga, String imgPath) {
+    private JPanel createMenuCard(int id_menu, String nama, int harga, String imgPath) {
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(Theme.BG_CARD);
-        card.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // PERBAIKAN: Set padding 0 pada bagian atas dan samping agar gambar menyentuh tepi card
+        card.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+
+        // Tentukan ukuran area gambar yang konsisten
+        int imgW = 180; // Lebar card
+        int imgH = 150; // Tinggi area gambar
 
         JLabel lblImg = new JLabel(); 
         lblImg.setHorizontalAlignment(SwingConstants.CENTER);
         lblImg.setOpaque(true);
         lblImg.setBackground(new Color(25, 35, 45)); 
-        lblImg.setPreferredSize(new Dimension(100, 70));
-        
-        // Logika untuk menampilkan gambar
+        lblImg.setPreferredSize(new Dimension(imgW, imgH));
+
         boolean imageLoaded = false;
         if (imgPath != null && !imgPath.isBlank()) {
             File imgFile = new File(imgPath);
             if (imgFile.exists()) {
                 try {
-                    // Skala gambar agar sesuai dengan ukuran kotak (misal 150x70)
-                    Image img = new ImageIcon(imgPath).getImage().getScaledInstance(150, 70, Image.SCALE_SMOOTH);
+                    // PERBAIKAN: Gunakan ukuran target (imgW, imgH) yang sama dengan PreferredSize
+                    ImageIcon icon = new ImageIcon(imgPath);
+                    Image img = icon.getImage().getScaledInstance(imgW, imgH, Image.SCALE_SMOOTH);
                     lblImg.setIcon(new ImageIcon(img));
                     imageLoaded = true;
                 } catch (Exception e) {
-                    // Abaikan dan gunakan fallback
+                    // Abaikan
                 }
             }
         }
 
-        // Jika gambar gagal dimuat atau tidak ada di database (Fallback Emoji Kamera)
         if (!imageLoaded) {
             lblImg.setText("\uD83D\uDCF7"); 
             lblImg.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 32));
@@ -279,11 +276,14 @@ public class OrderPanel extends JPanel {
 
         card.add(lblImg, BorderLayout.NORTH);
 
-        JPanel botPanel = new JPanel(new GridLayout(3, 1));
+        // Bagian Teks dan Tombol
+        JPanel botPanel = new JPanel(new GridLayout(3, 1, 0, 2));
         botPanel.setOpaque(false);
+        // Beri sedikit margin kiri-kanan khusus untuk teks agar tidak mepet tepi
+        botPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
         JLabel lblNama = new JLabel(nama, SwingConstants.CENTER);
-        lblNama.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblNama.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblNama.setForeground(Theme.TEXT_WHITE);
         botPanel.add(lblNama);
 
@@ -294,7 +294,13 @@ public class OrderPanel extends JPanel {
 
         Theme.StyledButton btnAdd = new Theme.StyledButton("Tambah", Theme.ACCENT_ORANGE, Color.WHITE);
         btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        btnAdd.addActionListener(e -> addToCart(nama, harga));
+        // Sesuaikan pemanggilan method sesuai logic di Dashboard kamu
+        btnAdd.addActionListener(e -> {
+            // Jika method ini di DashboardFrame, pastikan akses datanya benar
+            if (this instanceof OrderPanel) {
+                ((OrderPanel)this).addToCart(nama, harga);
+            }
+        });
         botPanel.add(btnAdd);
 
         card.add(botPanel, BorderLayout.CENTER);
@@ -344,6 +350,7 @@ public class OrderPanel extends JPanel {
 
     private void processOrder() {
         if (cartModel.getRowCount() == 0) return;
+
         if (selectedMeja == -1) {
             JOptionPane.showMessageDialog(this, "Tidak ada meja yang dipilih atau semua meja penuh!", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
@@ -351,34 +358,57 @@ public class OrderPanel extends JPanel {
 
         int noMeja = selectedMeja; 
         int totalBayar = Integer.parseInt(totalLabel.getText().replaceAll("[^\\d]", ""));
-        
+
         try {
             Connection conn = Database.getConnection();
             conn.setAutoCommit(false);
-            PreparedStatement psOrder = conn.prepareStatement("INSERT INTO orders (no_meja, tanggal, total_bayar, status) VALUES (?, CURDATE(), ?, 'belum selesai')", Statement.RETURN_GENERATED_KEYS);
-            psOrder.setInt(1, noMeja); psOrder.setInt(2, totalBayar); psOrder.executeUpdate();
 
-            ResultSet keys = psOrder.getGeneratedKeys();
-            int idOrder = 0; if (keys.next()) idOrder = keys.getInt(1);
+            // Panggil stored procedure
+            CallableStatement cs = conn.prepareCall("{CALL tambah_order(?, ?, ?)}");
+            cs.setInt(1, noMeja);
+            cs.setInt(2, totalBayar);
+            cs.registerOutParameter(3, java.sql.Types.INTEGER);
+            cs.execute();
 
+            int idOrder = cs.getInt(3);
+
+            // Insert detail order
             for (int i = 0; i < cartModel.getRowCount(); i++) {
                 String nama = cartModel.getValueAt(i, 0).toString();
                 int qty = Integer.parseInt(cartModel.getValueAt(i, 2).toString());
                 int tot = Integer.parseInt(cartModel.getValueAt(i, 3).toString().replaceAll("[^\\d]", ""));
-                
-                ResultSet rsMenu = conn.createStatement().executeQuery("SELECT id_menu FROM menu WHERE nama_menu = '" + nama.replace("'","''") + "' LIMIT 1");
-                int idMenu = 0; if (rsMenu.next()) idMenu = rsMenu.getInt(1);
 
-                PreparedStatement psDetail = conn.prepareStatement("INSERT INTO detail_order (id_order, id_menu, qty, total, status) VALUES (?, ?, ?, ?, 'belum selesai')");
-                psDetail.setInt(1, idOrder); psDetail.setInt(2, idMenu); psDetail.setInt(3, qty); psDetail.setInt(4, tot); psDetail.executeUpdate();
+                // Ambil id_menu
+                PreparedStatement psMenu = conn.prepareStatement(
+                    "SELECT id_menu FROM menu WHERE nama_menu = ? LIMIT 1"
+                );
+                psMenu.setString(1, nama);
+                ResultSet rsMenu = psMenu.executeQuery();
+
+                int idMenu = 0;
+                if (rsMenu.next()) idMenu = rsMenu.getInt("id_menu");
+
+                // Insert detail
+                PreparedStatement psDetail = conn.prepareStatement(
+                    "INSERT INTO detail_order (id_order, id_menu, qty, total) VALUES (?, ?, ?, ?)"
+                );
+                psDetail.setInt(1, idOrder);
+                psDetail.setInt(2, idMenu);
+                psDetail.setInt(3, qty);
+                psDetail.setInt(4, tot);
+                psDetail.executeUpdate();
             }
 
-            conn.commit(); conn.setAutoCommit(true);
+            conn.commit();
+            conn.setAutoCommit(true);
+
             JOptionPane.showMessageDialog(this, "Order #" + idOrder + " berhasil diproses!");
-            cartModel.setRowCount(0); totalLabel.setText("Total: Rp 0");
-            
-            // Panggil method dari Frame Utama untuk memperbarui panel lain
+
+            cartModel.setRowCount(0);
+            totalLabel.setText("Total: Rp 0");
+
             mainFrame.refreshBerandaDanTransaksi();
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }

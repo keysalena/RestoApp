@@ -38,7 +38,6 @@ public class LoginFrame extends JFrame {
         brand.setBounds(0, 0, 430, 580);
         lp.add(brand, JLayeredPane.PALETTE_LAYER);
 
-        // Right form
         JPanel form = buildFormPanel();
         form.setBounds(430, 0, 490, 580);
         lp.add(form, JLayeredPane.PALETTE_LAYER);
@@ -48,9 +47,6 @@ public class LoginFrame extends JFrame {
         getRootPane().setDefaultButton(null);
     }
 
-    // ────────────────────────────────────────────────────────────────
-    //  Background
-    // ────────────────────────────────────────────────────────────────
     class BackgroundPanel extends JPanel {
         @Override protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
@@ -58,11 +54,9 @@ public class LoginFrame extends JFrame {
             g2.setPaint(new GradientPaint(0, 0, Theme.BG_DARK, getWidth(), getHeight(), Theme.BG_PANEL));
             g2.fillRect(0, 0, getWidth(), getHeight());
 
-            // glow blobs
             drawGlow(g2, -60, -60, 280, Theme.ACCENT_ORANGE, 0.07f);
             drawGlow(g2, 620, 380, 360, new Color(60, 100, 220), 0.05f);
 
-            // dots
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.07f));
             g2.setColor(Theme.TEXT_MUTED);
             for (int x = 15; x < getWidth(); x += 28)
@@ -79,9 +73,6 @@ public class LoginFrame extends JFrame {
         }
     }
 
-    // ────────────────────────────────────────────────────────────────
-    //  Brand Panel
-    // ────────────────────────────────────────────────────────────────
     class BrandPanel extends JPanel {
         BrandPanel() { setOpaque(false); }
         @Override protected void paintComponent(Graphics g) {
@@ -89,23 +80,18 @@ public class LoginFrame extends JFrame {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
 
-            // overlay
             g2.setPaint(new GradientPaint(0,0,new Color(20,30,58,210),getWidth(),getHeight(),new Color(13,20,38,130)));
             g2.fillRect(0, 0, getWidth(), getHeight());
 
-            // top bar
             g2.setPaint(new GradientPaint(0,0,Theme.ACCENT_ORANGE,getWidth(),0,new Color(0,0,0,0)));
             g2.fillRect(0, 0, getWidth(), 4);
 
-            // right divider
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f));
             g2.setColor(Theme.ACCENT_ORANGE);
             g2.setStroke(new BasicStroke(1f));
             g2.drawLine(getWidth()-1, 0, getWidth()-1, getHeight());
 
-            // logo
             int cx = getWidth()/2, cy = 168, r = 52;
-            // outer ring
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.18f));
             g2.setColor(Theme.ACCENT_ORANGE);
             g2.setStroke(new BasicStroke(1.5f));
@@ -115,7 +101,6 @@ public class LoginFrame extends JFrame {
             g2.setPaint(new GradientPaint(cx-r, cy-r, Theme.ACCENT_ORANGE, cx+r, cy+r, new Color(190,75,15)));
             g2.fillOval(cx-r, cy-r, r*2, r*2);
 
-            // icon: fork & knife
             g2.setColor(Color.WHITE);
             g2.setStroke(new BasicStroke(2.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             g2.drawLine(cx-14, cy-22, cx-14, cy+22);
@@ -127,7 +112,6 @@ public class LoginFrame extends JFrame {
             g2.setStroke(new BasicStroke(2.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             g2.drawLine(cx+8, cy-22, cx+16, cy-7);
 
-            // app name
             g2.setFont(new Font("Segoe UI", Font.BOLD, 34));
             g2.setColor(Theme.TEXT_WHITE);
             FontMetrics fm = g2.getFontMetrics();
@@ -138,13 +122,11 @@ public class LoginFrame extends JFrame {
             fm = g2.getFontMetrics();
             g2.drawString("Management System", cx - fm.stringWidth("Management System")/2, cy+r+72);
 
-            // divider
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.15f));
             g2.setColor(Color.WHITE);
             g2.setStroke(new BasicStroke(1f));
             g2.drawLine(45, cy+r+92, getWidth()-45, cy+r+92);
 
-            // features
             String[] feats = {"✦  Manajemen Menu & Kategori","✦  Kelola Data Pengguna & Peran","✦  Laporan Penjualan Real-time","✦  Dashboard Statistik Lengkap"};
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
             g2.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 13));
@@ -155,7 +137,6 @@ public class LoginFrame extends JFrame {
                 g2.drawString(f, cx - fm.stringWidth(f)/2, fy); fy += 28;
             }
 
-            // version
             String today = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
             g2.setFont(Theme.FONT_SMALL);
             g2.setColor(Theme.TEXT_DIM);
@@ -166,9 +147,6 @@ public class LoginFrame extends JFrame {
         }
     }
 
-    // ────────────────────────────────────────────────────────────────
-    //  Form Panel
-    // ────────────────────────────────────────────────────────────────
     private JPanel buildFormPanel() {
         JPanel p = new JPanel(null) {
             @Override protected void paintComponent(Graphics g) {
@@ -184,7 +162,6 @@ public class LoginFrame extends JFrame {
 
         int px = 52, fw = 490 - px*2;
 
-        // Header
         JLabel h1 = Theme.label("Selamat Datang \uD83D\uDC4B", new Font("Segoe UI Emoji", Font.BOLD, 24), Theme.TEXT_WHITE); 
         h1.setBounds(px, 75, fw, 34);
         p.add(h1);
@@ -197,7 +174,6 @@ public class LoginFrame extends JFrame {
         sep.setBounds(px, 144, fw, 1);
         p.add(sep);
 
-        // Username
         JLabel ul = Theme.label("Username", Theme.FONT_LABEL, Theme.ACCENT_ORANGE);
         ul.setBounds(px, 162, fw, 18);
         p.add(ul);
@@ -205,7 +181,6 @@ public class LoginFrame extends JFrame {
         userField.setBounds(px, 182, fw, 42);
         p.add(userField);
 
-        // Password
         JLabel pl = Theme.label("Password", Theme.FONT_LABEL, Theme.ACCENT_ORANGE);
         pl.setBounds(px, 240, fw, 18);
         p.add(pl);
@@ -213,7 +188,6 @@ public class LoginFrame extends JFrame {
         passField.setBounds(px, 260, fw, 42);
         p.add(passField);
 
-        // Show password
         showPassCheck = new JCheckBox("Tampilkan Password");
         showPassCheck.setOpaque(false);
         showPassCheck.setForeground(Theme.TEXT_MUTED);
@@ -223,33 +197,28 @@ public class LoginFrame extends JFrame {
             passField.setEchoChar(showPassCheck.isSelected() ? '\0' : '●'));
         p.add(showPassCheck);
 
-        // Message label
         msgLabel = Theme.label("", Theme.FONT_SMALL, Theme.ACCENT_RED);
         msgLabel.setBounds(px, 312, fw, 18);
         msgLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         p.add(msgLabel);
 
-        // Login button
         Theme.StyledButton loginBtn = new Theme.StyledButton("\uD83D\uDD13  MASUK", Theme.ACCENT_ORANGE, Color.WHITE);
         loginBtn.setBounds(px, 350, fw, 44);
         loginBtn.setFont(new Font("Segoe UI Symbol", Font.BOLD, 14)); 
         loginBtn.addActionListener(e -> doLogin());
         p.add(loginBtn);                                                                
 
-        // Reset button
         Theme.StyledButton resetBtn = new Theme.StyledButton("\u2716  RESET", Theme.ACCENT_RED, Color.WHITE);
         resetBtn.setBounds(px, 404, fw, 38);
         resetBtn.setFont(new Font("Segoe UI Symbol", Font.BOLD, 12));
         resetBtn.addActionListener(e -> resetForm());
         p.add(resetBtn);
 
-        // Hint (Bisa Anda hapus jika database sudah jalan)
         JLabel hint = Theme.label("Pastikan username dan password benar sesuai database.", Theme.FONT_SMALL, Theme.TEXT_DIM);
         hint.setBounds(px, 455, fw, 16);
         hint.setHorizontalAlignment(SwingConstants.CENTER);
         p.add(hint);
 
-        // Footer
         JLabel footer = Theme.label("© 2026 RestoApp · Hak Cipta Dilindungi", Theme.FONT_SMALL, Theme.TEXT_DIM);
         footer.setBounds(px, 530, fw, 16);
         footer.setHorizontalAlignment(SwingConstants.CENTER);
@@ -258,9 +227,6 @@ public class LoginFrame extends JFrame {
         return p;
     }
 
-    // ────────────────────────────────────────────────────────────────
-    //  Logic (DIPERBARUI UNTUK DATABASE)
-    // ────────────────────────────────────────────────────────────────
     private void doLogin() {
         String user = userField.getRealText().trim();
         String pass = new String(passField.getPassword()).trim();
@@ -274,7 +240,6 @@ public class LoginFrame extends JFrame {
         try {
             Connection conn = Database.getConnection();
             
-            // Query ke tabel 'users'. Sesuaikan nama kolom jika berbeda di database Anda
             String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setString(1, user);
@@ -283,21 +248,17 @@ public class LoginFrame extends JFrame {
             ResultSet rs = pst.executeQuery();
 
             if (rs.next()) {
-                // Login Berhasil
                 msgLabel.setForeground(Theme.ACCENT_GREEN);
                 msgLabel.setText("Login berhasil! Membuka dashboard...");
                 
                 String namaUserDariDB = rs.getString("nama_user");
-                int idRole = rs.getInt("id_role"); // 1 = Admin, 2 = Kasir (sesuaikan dengan data role Anda)
-                
+                String role = rs.getString("role");                
                 Timer t = new Timer(600, e -> {
-                    dispose(); // Tutup LoginFrame
-                    if (idRole == 3) {
-                        // Role Admin → buka DashboardFrame lengkap
+                    dispose(); 
+                    if (role.equalsIgnoreCase("Admin")) {
                         DashboardFrame dashboard = new DashboardFrame(namaUserDariDB);
                         dashboard.setVisible(true);
-                    } else {
-                        // Role Kasir (atau role lain) → buka KasirDashboardFrame
+                    } else if (role.equalsIgnoreCase("Kasir")) {
                         KasirDashboardFrame kasirDashboard = new KasirDashboardFrame(namaUserDariDB);
                         kasirDashboard.setVisible(true);
                     }
@@ -306,7 +267,6 @@ public class LoginFrame extends JFrame {
                 t.start();
                 
             } else {
-                // Login Gagal (Data tidak ditemukan)
                 msgLabel.setForeground(Theme.ACCENT_RED);
                 msgLabel.setText("Username atau password salah!");
                 passField.setText("");
@@ -315,7 +275,7 @@ public class LoginFrame extends JFrame {
         } catch (Exception ex) {
             msgLabel.setForeground(Theme.ACCENT_RED);
             msgLabel.setText("Terjadi kesalahan sistem!");
-            ex.printStackTrace(); // Tampilkan detail error di console
+            ex.printStackTrace();
         }
     }
 

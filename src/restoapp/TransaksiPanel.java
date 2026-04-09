@@ -8,7 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 public class TransaksiPanel extends JPanel {
-    private KasirDashboardFrame mainFrame; // Referensi ke Frame Utama
+    private KasirDashboardFrame mainFrame; 
     
     private DefaultTableModel orderModel;
     private JTable orderTable;
@@ -61,7 +61,6 @@ public class TransaksiPanel extends JPanel {
         scroll.setBounds(20, 60, 610, 470);
         pnlKiri.add(scroll);
 
-        // ================ PANEL KANAN ================
         JPanel pnlKanan = new JPanel(null);
         pnlKanan.setBounds(700, 70, 280, 550);
         pnlKanan.setBackground(Theme.BG_PANEL);
@@ -102,11 +101,15 @@ public class TransaksiPanel extends JPanel {
         btnSimpan.addActionListener(e -> simpanPerubahanStatus());
         pnlKanan.add(btnSimpan);
 
-        // --- TAMBAHAN TOMBOL LIHAT DETAIL ---
-        Theme.StyledButton btnDetail = new Theme.StyledButton("\uD83D\uDCC4 Lihat Detail Item", Theme.ACCENT_BLUE, Color.WHITE);
+        Theme.StyledButton btnDetail = new Theme.StyledButton("Lihat Detail Item", Theme.ACCENT_BLUE, Color.WHITE);
         btnDetail.setBounds(20, 355, 240, 42);
         btnDetail.addActionListener(e -> tampilkanDetailOrder());
         pnlKanan.add(btnDetail);
+        
+        Theme.StyledButton btnHapus = new Theme.StyledButton("Hapus Order", Theme.ACCENT_RED, Color.WHITE);
+        btnHapus.setBounds(20, 410, 240, 42); // Posisi di bawah tombol detail
+        btnHapus.addActionListener(e -> hapusOrder());
+        pnlKanan.add(btnHapus);
 
         orderTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting() && orderTable.getSelectedRow() != -1) {
@@ -125,62 +128,103 @@ public class TransaksiPanel extends JPanel {
 
         loadOrders();
     }
+    
+    private void hapusOrder() {
+        if (selectedIdOrder == -1) {
+            JOptionPane.showMessageDialog(this, "Silakan pilih transaksi yang ingin dihapus!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-    public void loadOrders() {
-        orderModel.setRowCount(0);
-        try {
-            Connection conn = Database.getConnection();
-            String sql = "SELECT o.id_order, o.no_meja, o.tanggal, o.total_bayar, o.status as status_order, " +
-                         "COALESCE(t.status, 'belum lunas') as status_bayar " +
-                         "FROM orders o LEFT JOIN transaksi t ON o.id_order = t.id_order " +
-                         "ORDER BY o.id_order ASC LIMIT 50";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            while (rs.next()) {
-                orderModel.addRow(new Object[]{
-                    rs.getInt("id_order"), "Meja " + rs.getInt("no_meja"), rs.getDate("tanggal").toString(),
-                    "Rp " + String.format("%,d", rs.getInt("total_bayar")), rs.getString("status_order"), rs.getString("status_bayar")
-                });
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Hapus Order #" + selectedIdOrder + "?\n(Detail item akan dihapus otomatis oleh Database)",
+            "Konfirmasi", JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                Connection conn = Database.getConnection();
+
+                // Cukup satu Query! Trigger di MySQL akan menghapus detail_order secara otomatis
+                String sql = "DELETE FROM orders WHERE id_order = ?";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setInt(1, selectedIdOrder);
+
+                int hasil = ps.executeUpdate();
+
+                if (hasil > 0) {
+                    JOptionPane.showMessageDialog(this, "Data berhasil dihapus dari sistem.");
+
+                    // Refresh tampilan
+                    selectedIdOrder = -1;
+                    lblEditId.setText("Pilih transaksi...");
+                    lblEditTotal.setText("Total: -");
+                    loadOrders(); 
+                    mainFrame.refreshBerandaDanTransaksi();
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error saat menghapus: " + e.getMessage());
             }
-        } catch (Exception ex) { ex.printStackTrace(); }
+        }
     }
+    
+    public void loadOrders() {
+       orderModel.setRowCount(0);
+       try {
+           Connection conn = Database.getConnection();
+           String sql = "SELECT id_order, no_meja, tanggal, total_bayar, status_pesan, status_bayar " +
+                        "FROM orders ORDER BY id_order ASC LIMIT 50";
+
+           ResultSet rs = conn.createStatement().executeQuery(sql);
+           while (rs.next()) {
+               orderModel.addRow(new Object[]{
+                   rs.getInt("id_order"),
+                   "Meja " + rs.getInt("no_meja"),
+                   rs.getDate("tanggal").toString(),
+                   "Rp " + String.format("%,d", rs.getInt("total_bayar")),
+                   rs.getString("status_pesan"),
+                   rs.getString("status_bayar")
+               });
+           }
+       } catch (Exception ex) {
+           ex.printStackTrace();
+       }
+   }
 
     private void simpanPerubahanStatus() {
         if (selectedIdOrder == -1) return;
+
         String statOrder = cbOrder.getSelectedItem().toString().toLowerCase();
         String statBayar = cbBayar.getSelectedItem().toString().toLowerCase();
 
         try {
             Connection conn = Database.getConnection();
-            PreparedStatement ps1 = conn.prepareStatement("UPDATE orders SET status=? WHERE id_order=?");
-            ps1.setString(1, statOrder); ps1.setInt(2, selectedIdOrder); ps1.executeUpdate();
-            PreparedStatement ps2 = conn.prepareStatement("UPDATE detail_order SET status=? WHERE id_order=?");
-            ps2.setString(1, statOrder); ps2.setInt(2, selectedIdOrder); ps2.executeUpdate();
 
-            ResultSet rsCek = conn.createStatement().executeQuery("SELECT id_transaksi FROM transaksi WHERE id_order=" + selectedIdOrder);
-            boolean transaksiAda = rsCek.next();
-
-            if (statBayar.equals("lunas") && !transaksiAda) {
-                PreparedStatement psTrans = conn.prepareStatement("INSERT INTO transaksi (id_order, tanggal, total_bayar, status) VALUES (?, CURDATE(), ?, 'lunas')");
-                psTrans.setInt(1, selectedIdOrder); psTrans.setInt(2, selectedTotal); psTrans.executeUpdate();
-            } else if (statBayar.equals("belum lunas") && transaksiAda) {
-                conn.createStatement().executeUpdate("DELETE FROM transaksi WHERE id_order=" + selectedIdOrder);
-            }
+            // Update status order + status bayar langsung
+            PreparedStatement ps = conn.prepareStatement(
+                "UPDATE orders SET status_pesan=?, status_bayar=? WHERE id_order=?"
+            );
+            ps.setString(1, statOrder);
+            ps.setString(2, statBayar);
+            ps.setInt(3, selectedIdOrder);
+            ps.executeUpdate();
 
             JOptionPane.showMessageDialog(this, "Status diperbarui!");
-            loadOrders(); 
-            // Panggil method dari Frame Utama untuk memperbarui panel lain
-            mainFrame.refreshBerandaDanTransaksi(); 
-        } catch (Exception e) { e.printStackTrace(); }
+
+            loadOrders();
+            mainFrame.refreshBerandaDanTransaksi();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    // --- FUNGSI BARU: Menampilkan Pop-Up Detail Order ---
     private void tampilkanDetailOrder() {
         if (selectedIdOrder == -1) {
             JOptionPane.showMessageDialog(this, "Silakan pilih transaksi pada tabel terlebih dahulu!", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Membuat Dialog (Jendela Pop-up)
         JDialog dialog = new JDialog(mainFrame, "Detail Rincian Order #" + selectedIdOrder, true);
         dialog.setSize(550, 400);
         dialog.setLocationRelativeTo(this);
@@ -193,7 +237,6 @@ public class TransaksiPanel extends JPanel {
         JLabel lblTitle = Theme.label("Daftar Item Pesanan", new Font("Segoe UI", Font.BOLD, 18), Theme.TEXT_WHITE);
         panelUtama.add(lblTitle, BorderLayout.NORTH);
 
-        // Membuat Tabel Detail
         String[] cols = {"Nama Menu", "Harga Satuan", "Qty", "Subtotal"};
         DefaultTableModel detailModel = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -201,7 +244,6 @@ public class TransaksiPanel extends JPanel {
         JTable detailTable = new JTable(detailModel);
         KasirDashboardFrame.styleTable(detailTable);
 
-        // Mengambil data dari Database (JOIN detail_order dan menu)
         try {
             Connection conn = Database.getConnection();
             String sql = "SELECT m.nama_menu, m.harga, d.qty, d.total FROM detail_order d " +
@@ -223,13 +265,11 @@ public class TransaksiPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Terjadi kesalahan saat memuat detail pesanan.", "Error", JOptionPane.ERROR_MESSAGE);
         }
 
-        // Memasukkan tabel ke ScrollPane
         JScrollPane scroll = new JScrollPane(detailTable);
         scroll.getViewport().setBackground(Theme.BG_TABLE_ROW);
         scroll.setBorder(BorderFactory.createLineBorder(Theme.BORDER_DIM));
         panelUtama.add(scroll, BorderLayout.CENTER);
 
-        // Tombol Tutup di bawah
         Theme.StyledButton btnTutup = new Theme.StyledButton("Tutup", Theme.ACCENT_RED, Color.WHITE);
         btnTutup.setPreferredSize(new Dimension(100, 35));
         btnTutup.addActionListener(e -> dialog.dispose());

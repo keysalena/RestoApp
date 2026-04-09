@@ -16,7 +16,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
     private int selectedId = -1;
     private JLabel formTitle;
 
-    // ── Gambar ────────────────────────────────────────────────────────
     private String selectedImagePath = null; // menyimpan path file gambar
     private JLabel gambarPreview;
 
@@ -45,7 +44,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
         loadTableData(null);
     }
 
-    // ── Header ────────────────────────────────────────────────────────
     private JPanel buildHeader() {
         JPanel h = new JPanel(null);
         h.setOpaque(false);
@@ -62,7 +60,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
         return h;
     }
 
-    // ── Table Section ─────────────────────────────────────────────────
     private JPanel buildTableSection() {
         JPanel p = new JPanel(null) {
             @Override protected void paintComponent(Graphics g) {
@@ -150,7 +147,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
         return p;
     }
 
-    // ── Form Section ──────────────────────────────────────────────────
     private JPanel buildFormSection() {
         JPanel p = new JPanel(null) {
             @Override protected void paintComponent(Graphics g) {
@@ -175,21 +171,18 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
 
         int fx = 14, fw = 332, fy = 56;
 
-        // Nama
         p.add(Theme.label("Nama Masakan *", Theme.FONT_LABEL, Theme.ACCENT_ORANGE)).setBounds(fx, fy, fw, 16);
         namaField = new Theme.StyledTextField(null);
         namaField.setBounds(fx, fy + 18, fw, 36);
         p.add(namaField);
         fy += 62;
 
-        // Kategori
         p.add(Theme.label("Kategori *", Theme.FONT_LABEL, Theme.ACCENT_ORANGE)).setBounds(fx, fy, fw, 16);
         kategoriCombo = new Theme.StyledComboBox(new String[]{});
         kategoriCombo.setBounds(fx, fy + 18, fw, 36);
         p.add(kategoriCombo);
         fy += 62;
 
-        // Harga & Status
         p.add(Theme.label("Harga (Rp) *", Theme.FONT_LABEL, Theme.ACCENT_ORANGE)).setBounds(fx, fy, fw / 2 - 4, 16);
         hargaField = new Theme.StyledTextField(null);
         hargaField.setBounds(fx, fy + 18, fw / 2 - 4, 36);
@@ -201,7 +194,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
         p.add(statusCombo);
         fy += 62;
 
-        // ── Gambar ────────────────────────────────────────────────────
         p.add(Theme.label("Gambar Masakan", Theme.FONT_LABEL, Theme.ACCENT_ORANGE)).setBounds(fx, fy, fw, 16);
 
         gambarPreview = new JLabel("Belum ada gambar") {
@@ -271,7 +263,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
         return p;
     }
 
-    // ── Pilih Gambar ──────────────────────────────────────────────────
     private void pilihGambar() {
         JFileChooser fc = new JFileChooser();
         fc.setDialogTitle("Pilih Gambar Masakan");
@@ -288,7 +279,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
         }
 
         try {
-            // Salin ke folder images/ di direktori project
             String folder = "images/";
             new File(folder).mkdirs();
             String fileName = System.currentTimeMillis() + "_" + file.getName();
@@ -303,7 +293,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
         }
     }
 
-    /** Update preview dari path file */
     private void updateGambarPreview(String path) {
         if (path == null || path.isBlank() || !new File(path).exists()) {
             gambarPreview.setIcon(null);
@@ -320,7 +309,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
         }
     }
 
-    /** Thumbnail 44x44 untuk kolom tabel */
     private ImageIcon makeThumbnail(String path) {
         if (path == null || path.isBlank() || !new File(path).exists()) return null;
         try {
@@ -331,17 +319,14 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
         }
     }
 
-    // ── Load Data ─────────────────────────────────────────────────────
     private void loadTableData(String filter) {
         tableModel.setRowCount(0);
         try {
             java.sql.Connection conn = Database.getConnection();
-            String sql = "SELECT menu.*, kategori.nama_kategori FROM menu "
-                    + "JOIN kategori ON menu.id_kategori = kategori.id_kategori ";
+            String sql = "SELECT * FROM view_menu";
             if (filter != null && !filter.isBlank()) {
                 sql += "WHERE nama_menu LIKE ? OR nama_kategori LIKE ? ";
             }
-            sql += "ORDER BY id_menu DESC";
 
             java.sql.PreparedStatement pst = conn.prepareStatement(sql);
             if (filter != null && !filter.isBlank()) {
@@ -373,7 +358,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
             loadTableData(null);
     }
 
-    // ── Row Select ────────────────────────────────────────────────────
     private void onRowSelect() {
         int row = table.getSelectedRow();
         if (row < 0) return;
@@ -404,7 +388,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
         }
     }
 
-    // ── Save ──────────────────────────────────────────────────────────
     private void save() {
         String nama = namaField.getText().trim();
         String hargaStr = hargaField.getText().trim();
@@ -440,25 +423,23 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
             }
 
             if (selectedId == -1) {
-                // INSERT — gambar disimpan sebagai path (VARCHAR)
                 String sql = "INSERT INTO menu (nama_menu, harga, status, id_kategori, gambar) VALUES (?, ?, ?, ?, ?)";
                 java.sql.PreparedStatement pst = conn.prepareStatement(sql);
                 pst.setString(1, nama);
                 pst.setInt(2, Integer.parseInt(hargaStr));
                 pst.setString(3, status);
                 pst.setInt(4, idKat);
-                pst.setString(5, selectedImagePath); // path atau null jika tidak ada gambar
+                pst.setString(5, selectedImagePath); 
                 pst.executeUpdate();
                 JOptionPane.showMessageDialog(this, "Masakan berhasil ditambahkan!");
             } else {
-                // UPDATE — gambar disimpan sebagai path (VARCHAR)
                 String sql = "UPDATE menu SET nama_menu=?, harga=?, status=?, id_kategori=?, gambar=? WHERE id_menu=?";
                 java.sql.PreparedStatement pst = conn.prepareStatement(sql);
                 pst.setString(1, nama);
                 pst.setInt(2, Integer.parseInt(hargaStr));
                 pst.setString(3, status);
                 pst.setInt(4, idKat);
-                pst.setString(5, selectedImagePath); // path atau null jika tidak ada gambar
+                pst.setString(5, selectedImagePath); 
                 pst.setInt(6, selectedId);
                 pst.executeUpdate();
                 JOptionPane.showMessageDialog(this, "Masakan berhasil diperbarui!");
@@ -470,7 +451,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
         }
     }
 
-    // ── Delete ────────────────────────────────────────────────────────
     private void delete() {
         if (selectedId == -1) {
             JOptionPane.showMessageDialog(this, "Pilih masakan yang ingin dihapus terlebih dahulu!");
@@ -494,7 +474,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
         }
     }
 
-    // ── Clear Form ────────────────────────────────────────────────────
     private void clearForm() {
         selectedId = -1;
         namaField.setText("");
@@ -507,7 +486,6 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
         table.clearSelection();
     }
 
-    // ── Refresh ───────────────────────────────────────────────────────
     @Override
     public void refresh() {
         kategoriCombo.removeAllItems();

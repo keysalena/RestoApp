@@ -113,14 +113,12 @@ public class HomePanel extends JPanel implements DashboardFrame.Refreshable {
         t.setSelectionForeground(Theme.TEXT_WHITE);
         t.setIntercellSpacing(new Dimension(0, 1));
 
-        // Header
         t.getTableHeader().setBackground(Theme.BG_TABLE_HDR);
         t.getTableHeader().setForeground(Theme.ACCENT_ORANGE);
         t.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
         t.getTableHeader().setPreferredSize(new Dimension(0, 38));
         t.getTableHeader().setBorder(BorderFactory.createMatteBorder(0,0,2,0,Theme.ACCENT_ORANGE));
 
-        // Col widths
         int[] widths = {50, 220, 120, 130, 100};
         for (int i = 0; i < Math.min(cols.length, widths.length); i++) {
             t.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
@@ -147,9 +145,7 @@ public class HomePanel extends JPanel implements DashboardFrame.Refreshable {
             if (rs.next()) tersediaCount.setText(rs.getString(1));
 
             tableModel.setRowCount(0); // Bersihkan isi tabel lama
-            String sql = "SELECT m.id_menu, m.nama_menu, k.nama_kategori, m.harga, m.status " +
-                         "FROM menu m JOIN kategori k ON m.id_kategori = k.id_kategori " +
-                         "ORDER BY m.id_menu DESC LIMIT 10";
+            String sql = "SELECT * FROM view_menu ORDER BY id_menu DESC LIMIT 10";
             rs = st.executeQuery(sql);
             
             while (rs.next()) {

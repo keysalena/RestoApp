@@ -1,0 +1,31 @@
+# --- Hasil Kompilasi & Build ---
+/build/
+/dist/
+/target/
+/out/
+/bin/
+*.class
+*.jar
+*.war
+*.ear
+
+# --- IDE Spesifik (NetBeans, IntelliJ, Eclipse) ---
+/nbproject/private/
+/nbproject/project.properties
+/nbproject/project.xml
+.idea/
+*.iml
+*.iws
+.project
+.classpath
+.settings/
+
+# --- Database & Log ---
+*.log
+*.sql
+*.db
+/database/backup/
+
+# --- System Files ---
+.DS_Store
+Thumbs.db
