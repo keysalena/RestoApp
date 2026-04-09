@@ -1,7 +1,7 @@
 package restoapp;
 
 import javax.swing.*;
-// import javax.swing.border.*;
+import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
@@ -287,14 +287,20 @@ public class LoginFrame extends JFrame {
                 msgLabel.setForeground(Theme.ACCENT_GREEN);
                 msgLabel.setText("Login berhasil! Membuka dashboard...");
                 
-                // Ambil nama dari database untuk ditampilkan di Dashboard (sesuaikan nama kolomnya misal: 'nama_user')
-                // Jika tidak ada kolom nama, Anda bisa pakai: String namaUserDariDB = user;
-                String namaUserDariDB = rs.getString("nama_user"); 
+                String namaUserDariDB = rs.getString("nama_user");
+                int idRole = rs.getInt("id_role"); // 1 = Admin, 2 = Kasir (sesuaikan dengan data role Anda)
                 
                 Timer t = new Timer(600, e -> {
                     dispose(); // Tutup LoginFrame
-                    DashboardFrame dashboard = new DashboardFrame(namaUserDariDB);
-                    dashboard.setVisible(true);
+                    if (idRole == 3) {
+                        // Role Admin → buka DashboardFrame lengkap
+                        DashboardFrame dashboard = new DashboardFrame(namaUserDariDB);
+                        dashboard.setVisible(true);
+                    } else {
+                        // Role Kasir (atau role lain) → buka KasirDashboardFrame
+                        KasirDashboardFrame kasirDashboard = new KasirDashboardFrame(namaUserDariDB);
+                        kasirDashboard.setVisible(true);
+                    }
                 });
                 t.setRepeats(false); 
                 t.start();
