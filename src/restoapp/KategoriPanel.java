@@ -156,31 +156,77 @@ public class KategoriPanel extends JPanel implements DashboardFrame.Refreshable 
 
     private void save() {
         String nama = namaField.getText().trim();
-        if (nama.isEmpty()) { 
-            JOptionPane.showMessageDialog(this, "Nama kategori wajib diisi!", "Validasi", JOptionPane.WARNING_MESSAGE); 
-            return; 
+
+        if (nama.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Nama kategori wajib diisi!",
+                    "Validasi",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
         }
 
         try {
             java.sql.Connection conn = Database.getConnection();
+
+            // CEK DUPLIKAT
+            String cekSql;
+
             if (selectedId == -1) {
+                // tambah data
+                cekSql = "SELECT COUNT(*) FROM kategori WHERE LOWER(nama_kategori) = LOWER(?)";
+            } else {
+                // edit data
+                cekSql = "SELECT COUNT(*) FROM kategori WHERE LOWER(nama_kategori) = LOWER(?) AND id_kategori != ?";
+            }
+
+            java.sql.PreparedStatement cekPst = conn.prepareStatement(cekSql);
+            cekPst.setString(1, nama);
+
+            if (selectedId != -1) {
+                cekPst.setInt(2, selectedId);
+            }
+
+            java.sql.ResultSet rs = cekPst.executeQuery();
+
+            if (rs.next() && rs.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(this,
+                        "Nama kategori sudah ada!",
+                        "Duplikat",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // SIMPAN DATA
+            if (selectedId == -1) {
+
                 String sql = "INSERT INTO kategori (nama_kategori) VALUES (?)";
+
                 java.sql.PreparedStatement pst = conn.prepareStatement(sql);
                 pst.setString(1, nama);
                 pst.executeUpdate();
-                JOptionPane.showMessageDialog(this, "Kategori berhasil ditambahkan!");
+
+                JOptionPane.showMessageDialog(this,
+                        "Kategori berhasil ditambahkan!");
+
             } else {
+
                 String sql = "UPDATE kategori SET nama_kategori=? WHERE id_kategori=?";
+
                 java.sql.PreparedStatement pst = conn.prepareStatement(sql);
                 pst.setString(1, nama);
                 pst.setInt(2, selectedId);
                 pst.executeUpdate();
-                JOptionPane.showMessageDialog(this, "Kategori berhasil diperbarui!");
+
+                JOptionPane.showMessageDialog(this,
+                        "Kategori berhasil diperbarui!");
             }
+
             clearForm();
             loadTable();
+
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+            JOptionPane.showMessageDialog(this,
+                    "Error: " + e.getMessage());
         }
     }
 

@@ -176,63 +176,124 @@ public class UserPanel extends JPanel implements DashboardFrame.Refreshable {
 
     private void save() {
         String nama = namaField.getText().trim();
-        String uname = usernameField.getText().trim();
+
+        // otomatis lowercase
+        String uname = usernameField.getText().trim().toLowerCase();
+
         String pass = new String(passField.getPassword()).trim();
         String roleName = (String) roleCombo.getSelectedItem();
 
         if (nama.isEmpty() || uname.isEmpty() || roleName == null) {
-            JOptionPane.showMessageDialog(this, "Nama, Username, dan Role wajib diisi!", "Validasi", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Nama, Username, dan Role wajib diisi!",
+                    "Validasi",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
+
+        // validasi username
+        if (!uname.matches("^[a-z0-9._]+$")) {
+            JOptionPane.showMessageDialog(this,
+                    "Username hanya boleh huruf kecil, angka, titik (.), dan underscore (_)!",
+                    "Validasi",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         if (selectedId == -1 && pass.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Password wajib diisi untuk user baru!", "Validasi", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Password wajib diisi untuk user baru!",
+                    "Validasi",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         try {
             java.sql.Connection conn = Database.getConnection();
 
+            // cek username duplikat
+            String checkSql;
+
             if (selectedId == -1) {
-                java.sql.PreparedStatement checkUser = conn.prepareStatement("SELECT id_user FROM users WHERE username = ?");
-                checkUser.setString(1, uname);
-                if (checkUser.executeQuery().next()) {
-                    JOptionPane.showMessageDialog(this, "Username sudah digunakan!", "Validasi", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
+                checkSql = "SELECT id_user FROM users WHERE LOWER(username)=?";
+            } else {
+                checkSql = "SELECT id_user FROM users WHERE LOWER(username)=? AND id_user != ?";
+            }
+
+            java.sql.PreparedStatement checkUser = conn.prepareStatement(checkSql);
+            checkUser.setString(1, uname);
+
+            if (selectedId != -1) {
+                checkUser.setInt(2, selectedId);
+            }
+
+            if (checkUser.executeQuery().next()) {
+                JOptionPane.showMessageDialog(this,
+                        "Username sudah digunakan!",
+                        "Validasi",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // set text field jadi lowercase juga
+            usernameField.setText(uname);
+
+            if (selectedId == -1) {
 
                 String sql = "INSERT INTO users (nama_user, username, password, role) VALUES (?, ?, ?, ?)";
+
                 java.sql.PreparedStatement pst = conn.prepareStatement(sql);
+
                 pst.setString(1, nama);
                 pst.setString(2, uname);
-                pst.setString(3, pass); 
+                pst.setString(3, pass);
                 pst.setString(4, roleName);
+
                 pst.executeUpdate();
-                JOptionPane.showMessageDialog(this, "User berhasil ditambahkan!");
+
+                JOptionPane.showMessageDialog(this,
+                        "User berhasil ditambahkan!");
+
             } else {
+
                 if (pass.isEmpty()) {
+
                     String sql = "UPDATE users SET nama_user=?, username=?, role=? WHERE id_user=?";
+
                     java.sql.PreparedStatement pst = conn.prepareStatement(sql);
+
                     pst.setString(1, nama);
                     pst.setString(2, uname);
                     pst.setString(3, roleName);
                     pst.setInt(4, selectedId);
+
                     pst.executeUpdate();
+
                 } else {
+
                     String sql = "UPDATE users SET nama_user=?, username=?, password=?, role=? WHERE id_user=?";
+
                     java.sql.PreparedStatement pst = conn.prepareStatement(sql);
+
                     pst.setString(1, nama);
                     pst.setString(2, uname);
                     pst.setString(3, pass);
                     pst.setString(4, roleName);
                     pst.setInt(5, selectedId);
+
                     pst.executeUpdate();
                 }
-                JOptionPane.showMessageDialog(this, "User berhasil diperbarui!");
+
+                JOptionPane.showMessageDialog(this,
+                        "User berhasil diperbarui!");
             }
-            clearForm(); 
+
+            clearForm();
             loadTable();
+
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error Database: " + e.getMessage());
+            JOptionPane.showMessageDialog(this,
+                    "Error Database: " + e.getMessage());
         }
     }
 

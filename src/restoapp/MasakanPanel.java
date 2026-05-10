@@ -415,37 +415,80 @@ public class MasakanPanel extends JPanel implements DashboardFrame.Refreshable {
                     "SELECT id_kategori FROM kategori WHERE nama_kategori = ?");
             pstKat.setString(1, katNama);
             java.sql.ResultSet rsKat = pstKat.executeQuery();
-            if (rsKat.next()) idKat = rsKat.getInt("id_kategori");
+
+            if (rsKat.next()) {
+                idKat = rsKat.getInt("id_kategori");
+            }
 
             if (idKat == -1) {
                 JOptionPane.showMessageDialog(this, "Kategori tidak ditemukan!");
                 return;
             }
 
+            // CEK DUPLIKAT NAMA MASAKAN
+            String cekSql;
+
             if (selectedId == -1) {
-                String sql = "INSERT INTO menu (nama_menu, harga, status, id_kategori, gambar) VALUES (?, ?, ?, ?, ?)";
-                java.sql.PreparedStatement pst = conn.prepareStatement(sql);
-                pst.setString(1, nama);
-                pst.setInt(2, Integer.parseInt(hargaStr));
-                pst.setString(3, status);
-                pst.setInt(4, idKat);
-                pst.setString(5, selectedImagePath); 
-                pst.executeUpdate();
-                JOptionPane.showMessageDialog(this, "Masakan berhasil ditambahkan!");
+                // saat tambah data
+                cekSql = "SELECT COUNT(*) FROM menu WHERE LOWER(nama_menu) = LOWER(?)";
             } else {
-                String sql = "UPDATE menu SET nama_menu=?, harga=?, status=?, id_kategori=?, gambar=? WHERE id_menu=?";
+                // saat edit data
+                cekSql = "SELECT COUNT(*) FROM menu WHERE LOWER(nama_menu) = LOWER(?) AND id_menu != ?";
+            }
+
+            java.sql.PreparedStatement cekPst = conn.prepareStatement(cekSql);
+            cekPst.setString(1, nama);
+
+            if (selectedId != -1) {
+                cekPst.setInt(2, selectedId);
+            }
+
+            java.sql.ResultSet rsCek = cekPst.executeQuery();
+
+            if (rsCek.next() && rsCek.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(this,
+                        "Nama masakan sudah ada, gunakan nama lain!");
+                return;
+            }
+
+            // SIMPAN DATA
+            if (selectedId == -1) {
+
+                String sql = "INSERT INTO menu (nama_menu, harga, status, id_kategori, gambar) VALUES (?, ?, ?, ?, ?)";
+
                 java.sql.PreparedStatement pst = conn.prepareStatement(sql);
                 pst.setString(1, nama);
                 pst.setInt(2, Integer.parseInt(hargaStr));
                 pst.setString(3, status);
                 pst.setInt(4, idKat);
-                pst.setString(5, selectedImagePath); 
-                pst.setInt(6, selectedId);
+                pst.setString(5, selectedImagePath);
+
                 pst.executeUpdate();
-                JOptionPane.showMessageDialog(this, "Masakan berhasil diperbarui!");
+
+                JOptionPane.showMessageDialog(this,
+                        "Masakan berhasil ditambahkan!");
+
+            } else {
+
+                String sql = "UPDATE menu SET nama_menu=?, harga=?, status=?, id_kategori=?, gambar=? WHERE id_menu=?";
+
+                java.sql.PreparedStatement pst = conn.prepareStatement(sql);
+                pst.setString(1, nama);
+                pst.setInt(2, Integer.parseInt(hargaStr));
+                pst.setString(3, status);
+                pst.setInt(4, idKat);
+                pst.setString(5, selectedImagePath);
+                pst.setInt(6, selectedId);
+
+                pst.executeUpdate();
+
+                JOptionPane.showMessageDialog(this,
+                        "Masakan berhasil diperbarui!");
             }
+
             clearForm();
             loadTableData(null);
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
         }

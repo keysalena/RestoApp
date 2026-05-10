@@ -6,14 +6,17 @@
             <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/RestoApp.java</file>
             <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/Database.java</file>
             <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/Theme.java</file>
-            <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/LoginFrame.java</file>
             <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/DashboardFrame.java</file>
             <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/HomePanel.java</file>
             <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/KategoriPanel.java</file>
             <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/MasakanPanel.java</file>
-            <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/RolePanel.java</file>
             <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/UserPanel.java</file>
             <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/db_restoran.sql</file>
+            <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/LoginFrame.java</file>
+            <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/KasirDashboardFrame.java</file>
+            <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/BerandaKasirPanel.java</file>
+            <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/OrderPanel.java</file>
+            <file>file:/C:/Users/Keysalena/Documents/RestoApp/src/restoapp/TransaksiPanel.java</file>
         </group>
     </open-files>
 </project-private>

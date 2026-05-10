@@ -213,16 +213,26 @@ public class KasirDashboardFrame extends JFrame {
         clockLabel.setBounds(300, 18, 280, 18);
         tb.add(clockLabel);
         
-        JLabel kasirBadge = new JLabel("  " + loggedInName + "  ", SwingConstants.CENTER) {            
+        JLabel kasirBadge = new JLabel("  " + loggedInName + "  ", SwingConstants.CENTER) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setPaint(new GradientPaint(0,0,Theme.ACCENT_ORANGE,getWidth(),getHeight(),new Color(190,75,15)));
-                g2.fillRoundRect(0,0,getWidth(),getHeight(),6,6);
+                g2.setPaint(new GradientPaint(
+                        0, 0,
+                        Theme.ACCENT_ORANGE,
+                        getWidth(), getHeight(),
+                        new Color(190,75,15)
+                ));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 6, 6);
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
+
+        FontMetrics fm = kasirBadge.getFontMetrics(kasirBadge.getFont());
+        int width = fm.stringWidth("  " + loggedInName + "  ") + 20;
+
+        kasirBadge.setPreferredSize(new Dimension(width, 30));
         kasirBadge.setFont(new Font("Segoe UI", Font.BOLD, 12));
         kasirBadge.setForeground(Color.WHITE);
         kasirBadge.setOpaque(false);

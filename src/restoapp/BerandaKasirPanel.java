@@ -64,7 +64,7 @@ public class BerandaKasirPanel extends JPanel {
         });
         add(btnFilter);
 
-        Theme.StyledButton btnHariIni = new Theme.StyledButton("Hari Ini", new Color(60, 60, 80), Theme.TEXT_MUTED);
+        Theme.StyledButton btnHariIni = new Theme.StyledButton("Hari Ini", Theme.ACCENT_ORANGE, Color.WHITE);
         btnHariIni.setBounds(362, 86, 90, 28);
         btnHariIni.addActionListener(e -> {
             dateSpinner.setValue(new java.util.Date());
@@ -114,7 +114,7 @@ public class BerandaKasirPanel extends JPanel {
         pnlTerlaris.setOpaque(false);
         add(pnlTerlaris);
 
-        JLabel title = Theme.label("\uD83C\uDFC6  Menu Terlaris", new Font("Segoe UI", Font.BOLD, 15), Theme.TEXT_WHITE);
+        JLabel title = Theme.label("Menu Terlaris", new Font("Segoe UI", Font.BOLD, 15), Theme.TEXT_WHITE);
         title.setBounds(16, 16, 260, 22);
         pnlTerlaris.add(title);
 
@@ -192,14 +192,13 @@ public class BerandaKasirPanel extends JPanel {
         return new JScrollPane(table);
     }
 
-    // Konversi java.util.Date ke String format SQL (yyyy-MM-dd)
     private String toSqlDate(java.util.Date date) {
         if (date == null) return LocalDate.now().toString();
         java.time.Instant instant = date.toInstant();
         java.time.LocalDate ld = instant.atZone(java.time.ZoneId.systemDefault()).toLocalDate();
         return ld.format(DateTimeFormatter.ISO_LOCAL_DATE);
     }
-
+    
     public void refreshData() {
         String sqlDate = (selectedDate != null) ? toSqlDate(selectedDate) : LocalDate.now().toString();
 
@@ -253,9 +252,7 @@ public class BerandaKasirPanel extends JPanel {
                 }
             }
 
-            // 6. Menu terlaris menggunakan SUBQUERY
-            // Subquery: cari id_menu dengan total qty terbesar di detail_order
-            // Outer query: ambil seluruh data menu berdasarkan id_menu tersebut
+            //Menu Terlaris
             ResultSet rsMenu = conn.createStatement().executeQuery(
                 "SELECT * " +
                 "FROM menu " +

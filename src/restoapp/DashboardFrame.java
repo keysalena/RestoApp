@@ -202,34 +202,32 @@ public class DashboardFrame extends JFrame {
         clockLabel.setBounds(300, 18, 280, 18);
         tb.add(clockLabel);
 
-        JLabel adminBadge = new JLabel("  " + loggedInName + "  ", SwingConstants.CENTER) {            
+        JLabel adminBadge = new JLabel("  " + loggedInName + "  ", SwingConstants.CENTER) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setPaint(new GradientPaint(0,0,Theme.ACCENT_ORANGE,getWidth(),getHeight(),new Color(190,75,15)));
-                g2.fillRoundRect(0,0,getWidth(),getHeight(),6,6);
+                g2.setPaint(new GradientPaint(
+                        0, 0,
+                        Theme.ACCENT_ORANGE,
+                        getWidth(), getHeight(),
+                        new Color(190,75,15)
+                ));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 6, 6);
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
+
         adminBadge.setFont(new Font("Segoe UI", Font.BOLD, 12));
         adminBadge.setForeground(Color.WHITE);
         adminBadge.setOpaque(false);
-        adminBadge.setBounds(900, 12, 90, 28);
+
+        FontMetrics fm = adminBadge.getFontMetrics(adminBadge.getFont());
+        int width = fm.stringWidth("  " + loggedInName + "  ") + 20;
+
+        adminBadge.setBounds(900, 12, width, 28);
+
         tb.add(adminBadge);
-
-        JButton maxBtn = smallWinBtn(new Color(50, 180, 80), "□");
-        maxBtn.setBounds(1034, 14, 18, 18);
-        maxBtn.addActionListener(e -> {
-            if (getExtendedState() == JFrame.MAXIMIZED_BOTH) setExtendedState(JFrame.NORMAL);
-            else setExtendedState(JFrame.MAXIMIZED_BOTH);
-        });
-        tb.add(maxBtn);
-
-        JButton closeBtn = smallWinBtn(Theme.ACCENT_RED, "✕");
-        closeBtn.setBounds(1058, 14, 18, 18);
-        closeBtn.addActionListener(e -> System.exit(0));
-        tb.add(closeBtn);
 
         enableDrag(tb);
         return tb;

@@ -240,8 +240,7 @@ public class LoginFrame extends JFrame {
         try {
             Connection conn = Database.getConnection();
             
-            String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
-            PreparedStatement pst = conn.prepareStatement(sql);
+            String sql = "SELECT * FROM users WHERE LOWER(username) = LOWER(?) AND BINARY password = ?";            PreparedStatement pst = conn.prepareStatement(sql);
             pst.setString(1, user);
             pst.setString(2, pass);
             

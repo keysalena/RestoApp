@@ -7,8 +7,80 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.CallableStatement;
+
+// =========================================================
+// IMPLEMENTASI MODUL 3, 4, 5, 6 (LOGIKA BISNIS PBO)
+// =========================================================
+
+// Modul 6: Interface
+interface ITipePesanan {
+    int hitungTotalAkhir(int subTotal);
+    int getNomorMeja(int mejaPilihan);
+    String getStatusPesan();
+}
+
+// Modul 6: Abstract Class & Modul 4: Enkapsulasi
+abstract class BasePesanan implements ITipePesanan {
+    private String namaTipe; // Enkapsulasi (private)
+
+    public BasePesanan(String namaTipe) {
+        this.namaTipe = namaTipe;
+    }
+
+    public String getNamaTipe() { // Getter
+        return namaTipe;
+    }
+}
+
+// Modul 3: Inheritance (Mewarisi BasePesanan)
+class DineIn extends BasePesanan {
+    public DineIn() {
+        super("Makan di Tempat");
+    }
+
+    // Modul 5: Polymorphism (Override metode untuk perilaku berbeda)
+    @Override
+    public int hitungTotalAkhir(int subTotal) {
+        return subTotal; // Tidak ada tambahan biaya
+    }
+
+    @Override
+    public int getNomorMeja(int mejaPilihan) {
+        return mejaPilihan;
+    }
+
+    @Override
+    public String getStatusPesan() {
+        return "proses";
+    }
+}
+
+// Modul 3: Inheritance 
+class TakeAway extends BasePesanan {
+    private final int BIAYA_PACKAGING = 2000; // Enkapsulasi konstanta
+
+    public TakeAway() {
+        super("Take Away");
+    }
+
+    // Modul 5: Polymorphism
+    @Override
+    public int hitungTotalAkhir(int subTotal) {
+        return subTotal + BIAYA_PACKAGING; // Otomatis tambah 2000
+    }
+
+    @Override
+    public int getNomorMeja(int mejaPilihan) {
+        return 0; // Take away selalu meja 0
+    }
+
+    @Override
+    public String getStatusPesan() {
+        return "selesai"; // Langsung selesai
+    }
+}
+// =========================================================
 
 public class OrderPanel extends JPanel {
     private KasirDashboardFrame mainFrame; 
@@ -22,9 +94,14 @@ public class OrderPanel extends JPanel {
     
     private JPanel menuGridPanel;
     private JButton[] btnMejas = new JButton[20];
+    
+    // Objek Polimorfisme untuk menampung status pesanan saat ini
+    private ITipePesanan tipePesananSaatIni;
+    private int subTotalCart = 0; // Menyimpan total sebelum biaya tambahan
 
     public OrderPanel(KasirDashboardFrame mainFrame) {
         this.mainFrame = mainFrame;
+        this.tipePesananSaatIni = new DineIn(); // Default adalah Dine In
         setLayout(null);
         setOpaque(false);
         buildUI();
@@ -108,12 +185,12 @@ public class OrderPanel extends JPanel {
         checkoutTitle.setBounds(20, 195, 280, 25);
         pnlKanan.add(checkoutTitle);
 
-        JLabel mejaLabel = Theme.label("Pilih Nomor Meja:", Theme.FONT_LABEL, Theme.TEXT_WHITE);
-        mejaLabel.setBounds(20, 230, 150, 22);
+        JLabel mejaLabel = Theme.label("Pilih Meja:", Theme.FONT_LABEL, Theme.TEXT_WHITE);
+        mejaLabel.setBounds(20, 230, 80, 22);
         pnlKanan.add(mejaLabel);
 
         lblSelectedMeja = Theme.label("Meja: 1", new Font("Segoe UI", Font.BOLD, 14), Theme.ACCENT_ORANGE);
-        lblSelectedMeja.setBounds(220, 230, 80, 22);
+        lblSelectedMeja.setBounds(100, 230, 180, 22);
         pnlKanan.add(lblSelectedMeja);
 
         JPanel pnlMeja = new JPanel(new GridLayout(4, 5, 5, 5));
@@ -127,18 +204,33 @@ public class OrderPanel extends JPanel {
             btn.setForeground(Theme.ACCENT_ORANGE);
             btn.setFocusPainted(false);
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.addActionListener(e -> updateSelectedMeja(mejaNo));
+            btn.addActionListener(e -> {
+                tipePesananSaatIni = new DineIn(); // Kembali ke Dine In
+                updateSelectedMeja(mejaNo);
+            });
             btnMejas[i] = btn;
             pnlMeja.add(btn);
         }
         pnlKanan.add(pnlMeja);
 
+        // Tombol Take Away
+        JButton btnTakeAway = new JButton("Take Away (+Rp 2.000)");
+        btnTakeAway.setBounds(20, 395, 280, 30);
+        btnTakeAway.setBackground(Theme.BG_CARD);
+        btnTakeAway.setForeground(Theme.ACCENT_ORANGE);
+        btnTakeAway.setFocusPainted(false);
+        btnTakeAway.addActionListener(e -> {
+            tipePesananSaatIni = new TakeAway(); // Terapkan Polimorfisme
+            updateSelectedMeja(0); // 0 merepresentasikan Take Away
+        });
+        pnlKanan.add(btnTakeAway);
+
         totalLabel = Theme.label("Total: Rp 0", new Font("Segoe UI", Font.BOLD, 22), Theme.ACCENT_ORANGE);
-        totalLabel.setBounds(20, 410, 280, 30);
+        totalLabel.setBounds(20, 430, 280, 30); // Turun sedikit menyesuaikan tombol Take Away
         pnlKanan.add(totalLabel);
 
         Theme.StyledButton orderBtn = new Theme.StyledButton("Proses Order", Theme.ACCENT_BLUE, Color.WHITE);
-        orderBtn.setBounds(20, 450, 280, 45);
+        orderBtn.setBounds(20, 470, 280, 45);
         orderBtn.addActionListener(e -> processOrder());
         pnlKanan.add(orderBtn);
 
@@ -158,20 +250,33 @@ public class OrderPanel extends JPanel {
 
     private void updateSelectedMeja(int no) {
         selectedMeja = no;
-        if (no != -1) {
+        if (no == 0) {
+            lblSelectedMeja.setText(((BasePesanan)tipePesananSaatIni).getNamaTipe());
+            lblSelectedMeja.setForeground(Color.GREEN);
+            // Reset warna semua meja
+            for (int i = 0; i < 20; i++) {
+                if (btnMejas[i].isEnabled()) {
+                    btnMejas[i].setBackground(Theme.BG_CARD);
+                    btnMejas[i].setForeground(Theme.ACCENT_ORANGE);
+                }
+            }
+        } else if (no != -1) {
             lblSelectedMeja.setText("Meja: " + no);
             lblSelectedMeja.setForeground(Theme.ACCENT_ORANGE);
+            for (int i = 0; i < 20; i++) {
+                if (!btnMejas[i].isEnabled()) continue;
+                btnMejas[i].setBackground((i + 1) == no ? Theme.ACCENT_ORANGE : Theme.BG_CARD);
+                btnMejas[i].setForeground((i + 1) == no ? Color.BLACK : Theme.ACCENT_ORANGE);
+            }
         } else {
-            lblSelectedMeja.setText("Pilih Meja!");
+            lblSelectedMeja.setText("Pilih Meja / Take Away!");
             lblSelectedMeja.setForeground(Theme.ACCENT_RED);
         }
         
-        for (int i = 0; i < 20; i++) {
-            if (!btnMejas[i].isEnabled()) continue; // Abaikan meja yang disabled
-            btnMejas[i].setBackground((i + 1) == no ? Theme.ACCENT_ORANGE : Theme.BG_CARD);
-            btnMejas[i].setForeground((i + 1) == no ? Color.BLACK : Theme.ACCENT_ORANGE);
-        }
+        updateTotal(); // Hitung ulang total untuk mengecek penambahan biaya
     }
+
+    // [Fungsi refreshMejaStatus(), loadMenu(), createMenuCard() tetap sama seperti aslinya]
 
     public void refreshMejaStatus() {
         for (int i = 0; i < 20; i++) {
@@ -185,7 +290,7 @@ public class OrderPanel extends JPanel {
             Connection conn = Database.getConnection();
             String sql = "SELECT DISTINCT no_meja FROM orders " +
                          "WHERE COALESCE(status_bayar, 'belum lunas') != 'lunas' " +
-                         "AND DATE(tanggal) = CURDATE()";
+                         "AND DATE(tanggal) = CURDATE() AND no_meja != 0"; // Abaikan meja 0
             ResultSet rs = conn.createStatement().executeQuery(sql);
             
             while (rs.next()) {
@@ -203,8 +308,10 @@ public class OrderPanel extends JPanel {
                 }
             }
             
-            if (selectedMeja != -1 && btnMejas[selectedMeja - 1].isEnabled()) {
+            if (selectedMeja != -1 && selectedMeja != 0 && btnMejas[selectedMeja - 1].isEnabled()) {
                 updateSelectedMeja(selectedMeja);
+            } else if (selectedMeja == 0) {
+                updateSelectedMeja(0); // Tetap di state Take Away
             } else {
                 for (int i = 0; i < 20; i++) {
                     if (btnMejas[i].isEnabled()) {
@@ -239,12 +346,10 @@ public class OrderPanel extends JPanel {
     private JPanel createMenuCard(int id_menu, String nama, int harga, String imgPath) {
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(Theme.BG_CARD);
-        // PERBAIKAN: Set padding 0 pada bagian atas dan samping agar gambar menyentuh tepi card
         card.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
 
-        // Tentukan ukuran area gambar yang konsisten
-        int imgW = 180; // Lebar card
-        int imgH = 150; // Tinggi area gambar
+        int imgW = 180;
+        int imgH = 150; 
 
         JLabel lblImg = new JLabel(); 
         lblImg.setHorizontalAlignment(SwingConstants.CENTER);
@@ -257,13 +362,11 @@ public class OrderPanel extends JPanel {
             File imgFile = new File(imgPath);
             if (imgFile.exists()) {
                 try {
-                    // PERBAIKAN: Gunakan ukuran target (imgW, imgH) yang sama dengan PreferredSize
                     ImageIcon icon = new ImageIcon(imgPath);
                     Image img = icon.getImage().getScaledInstance(imgW, imgH, Image.SCALE_SMOOTH);
                     lblImg.setIcon(new ImageIcon(img));
                     imageLoaded = true;
                 } catch (Exception e) {
-                    // Abaikan
                 }
             }
         }
@@ -276,10 +379,8 @@ public class OrderPanel extends JPanel {
 
         card.add(lblImg, BorderLayout.NORTH);
 
-        // Bagian Teks dan Tombol
         JPanel botPanel = new JPanel(new GridLayout(3, 1, 0, 2));
         botPanel.setOpaque(false);
-        // Beri sedikit margin kiri-kanan khusus untuk teks agar tidak mepet tepi
         botPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
         JLabel lblNama = new JLabel(nama, SwingConstants.CENTER);
@@ -294,9 +395,7 @@ public class OrderPanel extends JPanel {
 
         Theme.StyledButton btnAdd = new Theme.StyledButton("Tambah", Theme.ACCENT_ORANGE, Color.WHITE);
         btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        // Sesuaikan pemanggilan method sesuai logic di Dashboard kamu
         btnAdd.addActionListener(e -> {
-            // Jika method ini di DashboardFrame, pastikan akses datanya benar
             if (this instanceof OrderPanel) {
                 ((OrderPanel)this).addToCart(nama, harga);
             }
@@ -341,32 +440,43 @@ public class OrderPanel extends JPanel {
     }
 
     private void updateTotal() {
-        int total = 0;
+        subTotalCart = 0;
         for (int i = 0; i < cartModel.getRowCount(); i++) {
-            total += Integer.parseInt(cartModel.getValueAt(i, 3).toString().replaceAll("[^\\d]", ""));
+            subTotalCart += Integer.parseInt(cartModel.getValueAt(i, 3).toString().replaceAll("[^\\d]", ""));
         }
-        totalLabel.setText("Total: Rp " + String.format("%,d", total));
+        
+        // MODUL 5: POLIMORFISME - Panggil hitungTotalAkhir
+        // Total akan otomatis bertambah 2000 jika objeknya adalah TakeAway
+        int totalAkhir = 0;
+        if (subTotalCart > 0) {
+            totalAkhir = tipePesananSaatIni.hitungTotalAkhir(subTotalCart);
+        }
+        
+        totalLabel.setText("Total: Rp " + String.format("%,d", totalAkhir));
     }
 
     private void processOrder() {
         if (cartModel.getRowCount() == 0) return;
 
         if (selectedMeja == -1) {
-            JOptionPane.showMessageDialog(this, "Tidak ada meja yang dipilih atau semua meja penuh!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Tidak ada meja yang dipilih!", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        int noMeja = selectedMeja; 
-        int totalBayar = Integer.parseInt(totalLabel.getText().replaceAll("[^\\d]", ""));
+        // Ambil No Meja Berdasarkan Polimorfisme (Dine in = meja asli, Take Away = 0)
+        int noMejaFinal = tipePesananSaatIni.getNomorMeja(selectedMeja); 
+        int totalBayarFinal = Integer.parseInt(totalLabel.getText().replaceAll("[^\\d]", ""));
+        
+        Connection conn = null;
 
         try {
-            Connection conn = Database.getConnection();
+            conn = Database.getConnection();
             conn.setAutoCommit(false);
 
             // Panggil stored procedure
             CallableStatement cs = conn.prepareCall("{CALL tambah_order(?, ?, ?)}");
-            cs.setInt(1, noMeja);
-            cs.setInt(2, totalBayar);
+            cs.setInt(1, noMejaFinal); // Mengirim 0 jika Take Away
+            cs.setInt(2, totalBayarFinal);
             cs.registerOutParameter(3, java.sql.Types.INTEGER);
             cs.execute();
 
@@ -399,18 +509,39 @@ public class OrderPanel extends JPanel {
                 psDetail.executeUpdate();
             }
 
+            // UPDATE STATUS KHUSUS TAKE AWAY
+            String statusFinal = tipePesananSaatIni.getStatusPesan();
+            if (statusFinal.equals("selesai")) {
+                // Asumsi field di database bernama 'status_pesan'
+                PreparedStatement psUpdate = conn.prepareStatement(
+                    "UPDATE orders SET status_pesan = ? WHERE id_order = ?"
+                );
+                psUpdate.setString(1, statusFinal);
+                psUpdate.setInt(2, idOrder);
+                psUpdate.executeUpdate();
+            }
+
             conn.commit();
             conn.setAutoCommit(true);
 
-            JOptionPane.showMessageDialog(this, "Order #" + idOrder + " berhasil diproses!");
+            JOptionPane.showMessageDialog(this, "Order #" + idOrder + " berhasil diproses!\nTipe: " + ((BasePesanan)tipePesananSaatIni).getNamaTipe());
 
+            // Reset kembali ke keadaan awal (Dine In)
             cartModel.setRowCount(0);
-            totalLabel.setText("Total: Rp 0");
+            tipePesananSaatIni = new DineIn();
+            updateTotal();
+            refreshMejaStatus();
 
             mainFrame.refreshBerandaDanTransaksi();
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception e) {
+            try {
+                conn.rollback();
+                System.out.println("Transaksi gagal, rollback dilakukan!");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            e.printStackTrace();
         }
     }
 }

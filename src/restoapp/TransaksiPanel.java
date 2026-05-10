@@ -82,7 +82,7 @@ public class TransaksiPanel extends JPanel {
         lblStatOrder.setBounds(20, 130, 240, 20);
         pnlKanan.add(lblStatOrder);
         
-        cbOrder = new JComboBox<>(new String[]{"Belum Selesai", "Selesai"}); 
+        cbOrder = new JComboBox<>(new String[]{"Proses", "Selesai"}); 
         cbOrder.setBounds(20, 155, 240, 38);
         styleComboBox(cbOrder);
         pnlKanan.add(cbOrder);
@@ -120,7 +120,7 @@ public class TransaksiPanel extends JPanel {
                 lblEditTotal.setText("Total    : " + orderModel.getValueAt(row, 3).toString());
                 
                 String dStatOrder = orderModel.getValueAt(row, 4).toString();
-                cbOrder.setSelectedItem(dStatOrder.equalsIgnoreCase("selesai") ? "Selesai" : "Belum Selesai");
+                cbOrder.setSelectedItem(dStatOrder.equalsIgnoreCase("selesai") ? "Selesai" : "Proses");
                 String dStatBayar = orderModel.getValueAt(row, 5).toString();
                 cbBayar.setSelectedItem(dStatBayar.equalsIgnoreCase("lunas") ? "Lunas" : "Belum Lunas");
             }
@@ -173,7 +173,7 @@ public class TransaksiPanel extends JPanel {
        try {
            Connection conn = Database.getConnection();
            String sql = "SELECT id_order, no_meja, tanggal, total_bayar, status_pesan, status_bayar " +
-                        "FROM orders ORDER BY id_order ASC LIMIT 50";
+                        "FROM orders ORDER BY id_order DESC LIMIT 50";
 
            ResultSet rs = conn.createStatement().executeQuery(sql);
            while (rs.next()) {
