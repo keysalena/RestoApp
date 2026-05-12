@@ -238,19 +238,6 @@ public class KasirDashboardFrame extends JFrame {
         kasirBadge.setOpaque(false);
         kasirBadge.setBounds(780, 12, 110, 28);
         tb.add(kasirBadge);
-        
-        JButton maxBtn = smallWinBtn(new Color(50, 180, 80), "\u25A1");
-        maxBtn.setBounds(1034, 14, 18, 18);
-        maxBtn.addActionListener(e -> {
-            if (getExtendedState() == JFrame.MAXIMIZED_BOTH) setExtendedState(JFrame.NORMAL);
-            else setExtendedState(JFrame.MAXIMIZED_BOTH);
-        });
-        tb.add(maxBtn);
-
-        JButton closeBtn = smallWinBtn(Theme.ACCENT_RED, "\u2715");
-        closeBtn.setBounds(1058, 14, 18, 18);
-        closeBtn.addActionListener(e -> System.exit(0));
-        tb.add(closeBtn);
 
         enableDrag(tb);
         return tb;

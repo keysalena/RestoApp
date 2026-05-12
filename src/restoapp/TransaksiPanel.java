@@ -106,8 +106,13 @@ public class TransaksiPanel extends JPanel {
         btnDetail.addActionListener(e -> tampilkanDetailOrder());
         pnlKanan.add(btnDetail);
         
+        Theme.StyledButton btnStruk = new Theme.StyledButton("Cetak Struk", Theme.ACCENT_ORANGE, Color.WHITE);
+        btnStruk.setBounds(20, 450, 240, 42);
+        btnStruk.addActionListener(e -> cetakStruk());
+        pnlKanan.add(btnStruk);
+        
         Theme.StyledButton btnHapus = new Theme.StyledButton("Hapus Order", Theme.ACCENT_RED, Color.WHITE);
-        btnHapus.setBounds(20, 410, 240, 42); // Posisi di bawah tombol detail
+        btnHapus.setBounds(20, 500, 240, 42);
         btnHapus.addActionListener(e -> hapusOrder());
         pnlKanan.add(btnHapus);
 
@@ -127,6 +132,147 @@ public class TransaksiPanel extends JPanel {
         });
 
         loadOrders();
+    }
+  
+    private void cetakStruk() {
+        if (selectedIdOrder == -1) {
+            JOptionPane.showMessageDialog(this,
+                "Pilih transaksi terlebih dahulu!",
+                "Peringatan",
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        StringBuilder struk = new StringBuilder();
+
+        struk.append("=================================\n");
+        struk.append("           RESTO APP\n");
+        struk.append("=================================\n");
+        struk.append("ID Order : #").append(selectedIdOrder).append("\n");
+        struk.append("Total    : Rp ")
+             .append(String.format("%,d", selectedTotal))
+             .append("\n");
+        struk.append("=================================\n");
+        struk.append("Item Pesanan\n");
+        struk.append("=================================\n");
+
+        try {
+            Connection conn = Database.getConnection();
+
+            String sql =
+                "SELECT m.nama_menu, d.qty, d.total " +
+                "FROM detail_order d " +
+                "JOIN menu m ON d.id_menu = m.id_menu " +
+                "WHERE d.id_order = ?";
+
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, selectedIdOrder);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String nama = rs.getString("nama_menu");
+                int qty = rs.getInt("qty");
+                int subtotal = rs.getInt("total");
+
+                struk.append(nama).append("\n");
+                struk.append(qty)
+                     .append(" x ")
+                     .append(" = Rp ")
+                     .append(String.format("%,d", subtotal))
+                     .append("\n\n");
+            }
+
+            struk.append("=================================\n");
+            struk.append("      Terima Kasih\n");
+            struk.append("=================================\n");
+
+            // TEXT AREA PREVIEW
+            JTextArea textArea = new JTextArea(struk.toString());
+            textArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+            textArea.setEditable(false);
+
+            JScrollPane scrollPane = new JScrollPane(textArea);
+
+            // DIALOG PREVIEW
+            JDialog dialog = new JDialog(mainFrame, "Preview Struk", true);
+            dialog.setSize(450, 550);
+            dialog.setLocationRelativeTo(this);
+            dialog.setLayout(new BorderLayout());
+
+            dialog.add(scrollPane, BorderLayout.CENTER);
+
+            // PANEL BUTTON
+            JPanel buttonPanel = new JPanel();
+
+            JButton btnPrint = new JButton("Print");
+            JButton btnDownload = new JButton("Download TXT");
+            JButton btnClose = new JButton("Tutup");
+
+            buttonPanel.add(btnPrint);
+            buttonPanel.add(btnDownload);
+            buttonPanel.add(btnClose);
+
+            dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+            // PRINT
+            btnPrint.addActionListener(e -> {
+                try {
+                    boolean printed = textArea.print();
+
+                    if (printed) {
+                        JOptionPane.showMessageDialog(dialog,
+                            "Struk berhasil dicetak!");
+                    }
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+
+                    JOptionPane.showMessageDialog(dialog,
+                        "Gagal mencetak struk!");
+                }
+            });
+
+            // DOWNLOAD TXT
+            btnDownload.addActionListener(e -> {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setSelectedFile(
+                    new java.io.File("struk_order_" + selectedIdOrder + ".txt")
+                );
+
+                int option = fileChooser.showSaveDialog(dialog);
+
+                if (option == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        java.io.FileWriter writer =
+                            new java.io.FileWriter(fileChooser.getSelectedFile());
+
+                        writer.write(struk.toString());
+                        writer.close();
+
+                        JOptionPane.showMessageDialog(dialog,
+                            "Struk berhasil disimpan!");
+
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+
+                        JOptionPane.showMessageDialog(dialog,
+                            "Gagal menyimpan file!");
+                    }
+                }
+            });
+
+            // CLOSE
+            btnClose.addActionListener(e -> dialog.dispose());
+
+            dialog.setVisible(true);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            JOptionPane.showMessageDialog(this,
+                "Gagal membuat struk!");
+        }
     }
     
     private void hapusOrder() {
